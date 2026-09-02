@@ -13,14 +13,14 @@ function App() {
   const [role, setRole] = useState('USER');
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', email: '' });
+  const [rateForm, setRateForm] = useState({ rate: '' });
+  const [rateUser, setRateUser] = useState(null);
   const [schedules, setSchedules] = useState([]);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [newSchedule, setNewSchedule] = useState({ title: '', description: '', companyId: '', operatorId: '', status: '' });
-  
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
-
   const [activePage, setActivePage] = useState('Overview');
 
   const isAdmin = user && user.role === 'ADMIN';
@@ -73,6 +73,31 @@ function App() {
       }
     } catch (error) {
       setPasswordMessage('Error changing password');
+    }
+  };
+
+  const handleSaveRate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${rateUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: rateUser.name, email: rateUser.email, rate: parseFloat(rateForm.rate) }),
+      });
+
+      if (response.ok) {
+        alert("Rate updated successfully!");
+        setCompanyUsers(companyUsers.map(op => op.id === rateUser.id ? { ...op, rate: parseFloat(rateForm.rate) } : op));
+        setRateUser(null);
+        setRateForm({ rate: '' });
+      } else {
+        alert("Failed to update rate.");
+      }
+    } catch (error) {
+      alert("Error updating rate.");
     }
   };
 
@@ -161,7 +186,7 @@ function App() {
     setMessage(''); setEmail(''); setPassword('');
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
     setSchedules([]);
-    setActivePage('Overview'); // Will be reset in handleLogin on next login
+    setRateUser(null);
   };
 
   const handleDelete = async (id) => {
@@ -271,8 +296,9 @@ function App() {
                       <ul className="data-list">
                         {companyUsers.map((op) => (
                           <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>{op.name} ({op.email})</span>
+                            <span>{op.name} ({op.email}) - Rate: ${op.rate}</span>
                             <div>
+                              <button onClick={() => { setRateUser(op); setRateForm({ rate: op.rate }); }}>Edit Rate</button>
                               {isAdmin && (
                                 <button 
                                   onClick={() => handleDelete(op.id)}
@@ -341,6 +367,30 @@ function App() {
                     </button>
                     <button 
                       onClick={() => setEditingUser(null)}
+                      style={{ marginLeft: '10px', padding: '10px 20px', cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+                {rateUser && (
+                  <div className="data-section" style={{ marginTop: '20px' }}>
+                    <h3>Edit Rate for {rateUser.name}</h3>
+                    <input 
+                      type="number" 
+                      placeholder="Rate" 
+                      value={rateForm.rate} 
+                      onChange={(e) => setRateForm({ rate: e.target.value })}
+                      style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
+                    />
+                    <button 
+                      onClick={handleSaveRate}
+                      style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '10px 20px', cursor: 'pointer' }}
+                    >
+                      Save Rate
+                    </button>
+                    <button 
+                      onClick={() => setRateUser(null)}
                       style={{ marginLeft: '10px', padding: '10px 20px', cursor: 'pointer' }}
                     >
                       Cancel
@@ -419,6 +469,7 @@ function App() {
                 <p><strong>Email:</strong> {user.email}</p>
                 <p><strong>Company ID:</strong> {user.companyId}</p>
                 <p><strong>Role:</strong> {user.role}</p>
+                <p><strong>Rate:</strong> ${user.rate ? user.rate : '0.00'}</p>
               </div>
             </>
           )}

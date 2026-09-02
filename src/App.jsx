@@ -10,39 +10,14 @@ function App() {
   const [companyUsers, setCompanyUsers] = useState([]);
   const [showCompany, setShowCompany] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-    const [editingUser, setEditingUser] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', email: '' });
 
-  const handleEditClick = (operator) => {
-    setEditingUser(operator);
-    setEditForm({ name: operator.name, email: operator.email });
-  };
-
-  const handleSaveEdit = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${editingUser.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(editForm),
-      });
-
-      if (response.ok) {
-        // Update the list locally
-        setCompanyUsers(companyUsers.map(op => op.id === editingUser.id ? { ...op, ...editForm } : op));
-        setActiveUsers(activeUsers.map(op => op.id === editingUser.id ? { ...op, ...editForm } : op));
-        setEditingUser(null); // Close the form
-        alert("User updated successfully!");
-      } else {
-        alert("Failed to update user.");
-      }
-    } catch (error) {
-      alert("Error updating user.");
-    }
-  };
+  // Roles
+  const isAdmin = user && user.role === 'ADMIN';
+  const isManager = user && user.role === 'MANAGER';
+  const isAdminOrManager = isAdmin || isManager;
+  const isUser = !isAdminOrManager;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -122,6 +97,36 @@ function App() {
     }
   };
 
+  const handleEditClick = (operator) => {
+    setEditingUser(operator);
+    setEditForm({ name: operator.name, email: operator.email });
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${editingUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(editForm),
+      });
+
+      if (response.ok) {
+        setCompanyUsers(companyUsers.map(op => op.id === editingUser.id ? { ...op, ...editForm } : op));
+        setActiveUsers(activeUsers.map(op => op.id === editingUser.id ? { ...op, ...editForm } : op));
+        setEditingUser(null);
+        alert("User updated successfully!");
+      } else {
+        alert("Failed to update user.");
+      }
+    } catch (error) {
+      alert("Error updating user.");
+    }
+  };
+
   useEffect(() => {
     const fetchActiveUsers = async () => {
       try {
@@ -137,7 +142,7 @@ function App() {
         console.log("Could not fetch active users");
       }
     };
-    if (user) fetchActiveUsers();
+    if (user && isAdminOrManager) fetchActiveUsers();
   }, [user]);
 
   const fetchCompanyUsers = async () => {
@@ -146,7 +151,6 @@ function App() {
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/company/${user.companyId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
-
       if (response.ok) {
         const data = await response.json();
         setCompanyUsers(data);
@@ -158,13 +162,146 @@ function App() {
   };
 
   if (user) {
+    // ADMIN OR MANAGER DASHBOARD
+    if (isAdminOrManager) {
+      return (
+        <div className="dashboard">
+          <div className="sidebar">
+            <h2>My Dashboard</h2>
+            <ul>
+              <li>Overview</li>
+              <li>Operators</li>
+              <li>Settings</li>
+            </ul>
+            <div style={{ marginTop: 'auto' }}>
+              <button onClick={handleLogout} className="logout-btn" style={{ width: '100%' }}>Logout</button>
+            </div>
+          </div>
+
+          <div className="main-content">
+            <h1 className="dashboard-header">Welcome, {user.name}!</h1>
+
+            <div className="profile-card">
+              <h3>Profile Details</h3>
+              <p><strong>Email:</strong> {user.email}</p>
+              <p><strong>Company ID:</strong> {user.companyId}</p>
+              <p><strong>Role:</strong> {user.role}</p>
+            </div>
+
+            <div className="data-section">
+              <h3>Currently Active Operators</h3>
+              {activeUsers.length > 0 ? (
+                <ul className="data-list">
+                  {activeUsers.map((op) => (
+                    <li key={op.id}>{op.name} ({op.email})</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No active operators right now.</p>
+              )}
+            </div>
+
+            <button onClick={fetchCompanyUsers} className="action-btn">
+              Show My Company Operators
+            </button>
+
+            {showCompany && (
+              <div className="data-section">
+                <h3>Company {user.companyId} Operators</h3>
+                {companyUsers.length > 0 ? (
+                  <ul className="data-list">
+                    {companyUsers.map((op) => (
+                      <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>{op.name} ({op.email})</span>
+                        <div>
+                          {isAdmin && (
+                            <button 
+                              onClick={() => handleDelete(op.id)}
+                              style={{ 
+                                backgroundColor: '#e53e3e', 
+                                color: 'white', 
+                                border: 'none', 
+                                padding: '4px 10px', 
+                                borderRadius: '4px', 
+                                cursor: 'pointer', 
+                                marginLeft: '8px' 
+                              }}
+                            >
+                              Delete
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => handleEditClick(op)}
+                            style={{ 
+                              backgroundColor: '#3498db', 
+                              color: 'white', 
+                              border: 'none', 
+                              padding: '4px 10px', 
+                              borderRadius: '4px', 
+                              cursor: 'pointer', 
+                              marginLeft: '8px' 
+                            }}
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No operators found for this company.</p>
+                )}
+              </div>
+            )}
+
+            {editingUser && (
+              <div className="data-section" style={{ marginTop: '20px' }}>
+                <h3>Edit Operator</h3>
+                <input 
+                  type="text" 
+                  value={editForm.name} 
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
+                />
+                <input 
+                  type="email" 
+                  value={editForm.email} 
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
+                />
+                <button 
+                  onClick={handleSaveEdit}
+                  style={{ 
+                    backgroundColor: '#28a745', 
+                    color: 'white', 
+                    border: 'none', 
+                    padding: '10px 20px', 
+                    cursor: 'pointer' 
+                  }}
+                >
+                  Save Changes
+                </button>
+                <button 
+                  onClick={() => setEditingUser(null)}
+                  style={{ marginLeft: '10px', padding: '10px 20px', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // NORMAL USER DASHBOARD
     return (
       <div className="dashboard">
         <div className="sidebar">
           <h2>My Dashboard</h2>
           <ul>
-            <li>Overview</li>
-            <li>Operators</li>
+            <li>My Profile</li>
+            <li>My Schedules</li>
             <li>Settings</li>
           </ul>
           <div style={{ marginTop: 'auto' }}>
@@ -176,107 +313,17 @@ function App() {
           <h1 className="dashboard-header">Welcome, {user.name}!</h1>
 
           <div className="profile-card">
-            <h3>Profile Details</h3>
+            <h3>My Profile Details</h3>
             <p><strong>Email:</strong> {user.email}</p>
             <p><strong>Company ID:</strong> {user.companyId}</p>
+            <p><strong>Role:</strong> {user.role}</p>
           </div>
 
           <div className="data-section">
-            <h3>Currently Active Operators</h3>
-            {activeUsers.length > 0 ? (
-              <ul className="data-list">
-                {activeUsers.map((op) => (
-                  <li key={op.id}>{op.name} ({op.email})</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No active operators right now.</p>
-            )}
+            <h3>My Schedules</h3>
+            <p>No schedules available right now.</p>
           </div>
-
-          <button onClick={fetchCompanyUsers} className="action-btn">
-            Show My Company Operators
-          </button>
-
-          {showCompany && (
-            <div className="data-section">
-              <h3>Company {user.companyId} Operators</h3>
-              {companyUsers.length > 0 ? (
-                <ul className="data-list">
-                  {companyUsers.map((op) => (
-                    <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{op.name} ({op.email})</span>
-                      <button 
-                        onClick={() => handleDelete(op.id)}
-                        style={{ 
-                          backgroundColor: '#e53e3e', 
-                          color: 'white', 
-                          border: 'none', 
-                          padding: '4px 10px', 
-                          borderRadius: '4px', 
-                          cursor: 'pointer' 
-                        }}
-                      >
-                        Delete
-                      </button>
-                                            <button 
-                        onClick={() => handleEditClick(op)}
-                        style={{ 
-                          backgroundColor: '#3498db', 
-                          color: 'white', 
-                          border: 'none', 
-                          padding: '4px 10px', 
-                          borderRadius: '4px', 
-                          cursor: 'pointer', 
-                          marginLeft: '8px' 
-                        }}
-                      >
-                        Edit
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No operators found for this company.</p>
-              )}
-            </div>
-          )}
         </div>
-                {editingUser && (
-          <div className="data-section" style={{ marginTop: '20px' }}>
-            <h3>Edit Operator</h3>
-            <input 
-              type="text" 
-              value={editForm.name} 
-              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-              style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
-            />
-            <input 
-              type="email" 
-              value={editForm.email} 
-              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-              style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
-            />
-            <button 
-              onClick={handleSaveEdit}
-              style={{ 
-                backgroundColor: '#28a745', 
-                color: 'white', 
-                border: 'none', 
-                padding: '10px 20px', 
-                cursor: 'pointer' 
-              }}
-            >
-              Save Changes
-            </button>
-            <button 
-              onClick={() => setEditingUser(null)}
-              style={{ marginLeft: '10px', padding: '10px 20px', cursor: 'pointer' }}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
       </div>
     );
   }

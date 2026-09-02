@@ -17,7 +17,6 @@ function App() {
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [newSchedule, setNewSchedule] = useState({ title: '', description: '', companyId: '', operatorId: '', status: '' });
   
-  // State for Change Password
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
@@ -52,7 +51,6 @@ function App() {
     }
   }, [user]);
 
-  // Change Password Handler
   const handleChangePassword = async (e) => {
     e.preventDefault();
     try {
@@ -118,6 +116,7 @@ function App() {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
+        setActivePage(isAdminOrManager ? 'Overview' : 'My Profile');
       } else {
         setMessage(`Error: ${data.message}`);
       }
@@ -159,10 +158,10 @@ function App() {
     }
     localStorage.removeItem('token');
     setUser(null);
-    setActivePage('Overview');
     setMessage(''); setEmail(''); setPassword('');
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
     setSchedules([]);
+    setActivePage('Overview'); // Will be reset in handleLogin on next login
   };
 
   const handleDelete = async (id) => {

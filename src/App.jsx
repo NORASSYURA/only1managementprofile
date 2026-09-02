@@ -17,8 +17,12 @@ function App() {
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [newSchedule, setNewSchedule] = useState({ title: '', description: '', companyId: '', operatorId: '', status: '' });
   
-  // Added state for switching pages on User Dashboard too!
-  const [activePage, setActivePage] = useState('My Profile');
+  // State for Change Password
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState('');
+
+  const [activePage, setActivePage] = useState('Overview');
 
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
@@ -47,6 +51,32 @@ function App() {
       fetchSchedules();
     }
   }, [user]);
+
+  // Change Password Handler
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/change-password/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password: oldPassword, newPassword: newPassword }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setPasswordMessage('Password changed successfully!');
+        setOldPassword('');
+        setNewPassword('');
+      } else {
+        setPasswordMessage(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      setPasswordMessage('Error changing password');
+    }
+  };
 
   const handleCreateSchedule = async () => {
     if (!newSchedule.title || !newSchedule.operatorId) {
@@ -211,7 +241,7 @@ function App() {
               <li onClick={() => setActivePage('Overview')}>Overview</li>
               <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
               <li onClick={() => setActivePage('Schedule')}>Schedule</li>
-              <li>Settings</li>
+              <li onClick={() => setActivePage('Settings')}>Settings</li>
             </ul>
             <div style={{ marginTop: 'auto' }}>
               <button onClick={handleLogout} className="logout-btn" style={{ width: '100%' }}>Logout</button>
@@ -222,7 +252,6 @@ function App() {
             {activePage === 'Overview' && (
               <>
                 <h1 className="dashboard-header">Welcome, {user.name}!</h1>
-
                 <div className="profile-card">
                   <h3>Profile Details</h3>
                   <p><strong>Email:</strong> {user.email}</p>
@@ -346,6 +375,21 @@ function App() {
                 </div>
               </>
             )}
+
+            {activePage === 'Settings' && (
+              <>
+                <h1 className="dashboard-header">Settings</h1>
+                <div className="data-section">
+                  <h3>Change Password</h3>
+                  <form onSubmit={handleChangePassword}>
+                    <input type="password" placeholder="Current Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className="form-input" />
+                    <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-input" />
+                    <button type="submit" className="action-btn">Change Password</button>
+                  </form>
+                  {passwordMessage && <p style={{ color: passwordMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px' }}>{passwordMessage}</p>}
+                </div>
+              </>
+            )}
           </div>
         </div>
       );
@@ -356,11 +400,10 @@ function App() {
       <div className="dashboard">
         <div className="sidebar">
           <h2>My Dashboard</h2>
-          {/* Added activePage state and onClick for User */}
           <ul>
             <li onClick={() => setActivePage('My Profile')}>My Profile</li>
             <li onClick={() => setActivePage('My Schedules')}>My Schedules</li>
-            <li>Settings</li>
+            <li onClick={() => setActivePage('Settings')}>Settings</li>
           </ul>
           <div style={{ marginTop: 'auto' }}>
             <button onClick={handleLogout} className="logout-btn" style={{ width: '100%' }}>Logout</button>
@@ -371,7 +414,6 @@ function App() {
           {activePage === 'My Profile' && (
             <>
               <h1 className="dashboard-header">Welcome, {user.name}!</h1>
-
               <div className="profile-card">
                 <h3>My Profile Details</h3>
                 <p><strong>Email:</strong> {user.email}</p>
@@ -394,6 +436,21 @@ function App() {
                 ) : (
                   <p>No schedules available right now.</p>
                 )}
+              </div>
+            </>
+          )}
+
+          {activePage === 'Settings' && (
+            <>
+              <h1 className="dashboard-header">Settings</h1>
+              <div className="data-section">
+                <h3>Change Password</h3>
+                <form onSubmit={handleChangePassword}>
+                  <input type="password" placeholder="Current Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className="form-input" />
+                  <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-input" />
+                  <button type="submit" className="action-btn">Change Password</button>
+                </form>
+                {passwordMessage && <p style={{ color: passwordMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px' }}>{passwordMessage}</p>}
               </div>
             </>
           )}

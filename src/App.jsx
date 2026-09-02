@@ -13,19 +13,78 @@ function App() {
   const [role, setRole] = useState('USER');
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', email: '' });
+  const [schedules, setSchedules] = useState([]);
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [newSchedule, setNewSchedule] = useState({ title: '', description: '', companyId: '', operatorId: '', status: '' });
 
-  // Roles
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
 
+  // Fetch schedules based on user role
+  const fetchSchedules = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      // Admin/Manager sees all company schedules
+      // Operator sees their own schedules
+      const url = isAdminOrManager 
+        ? `https://operator-backend-1jjp.onrender.com/api/schedule/company/${user.companyId}`
+        : `https://operator-backend-1jjp.onrender.com/api/schedule/operator/${user.id}`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSchedules(data);
+      }
+    } catch (error) {
+      console.log("Could not fetch schedules");
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchSchedules();
+    }
+  }, [user]);
+
+  // Create schedule
+  const handleCreateSchedule = async () => {
+    if (!newSchedule.title || !newSchedule.operatorId) {
+      alert("Please fill in title and operator ID");
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ...newSchedule, companyId: user.companyId }),
+      });
+      if (response.ok) {
+        alert("Schedule created successfully!");
+        setNewSchedule({ title: '', description: '', operatorId: '', status: '' });
+        setShowScheduleForm(false);
+        fetchSchedules();
+      } else {
+        alert("Failed to create schedule.");
+      }
+    } catch (error) {
+      alert("Error creating schedule.");
+    }
+  };
+
+  // Login
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }), // FIXED: Removed role from login
+        body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -39,13 +98,14 @@ function App() {
     }
   };
 
+  // Register
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role }), // FIXED: Added role here!
+        body: JSON.stringify({ name, email, password, role }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -60,6 +120,7 @@ function App() {
     }
   };
 
+  // Logout
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -74,11 +135,12 @@ function App() {
     setUser(null);
     setMessage(''); setEmail(''); setPassword('');
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
+    setSchedules([]);
   };
 
+  // Delete
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this operator?")) return;
-    
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${id}`, {
@@ -97,6 +159,7 @@ function App() {
     }
   };
 
+  // Edit
   const handleEditClick = (operator) => {
     setEditingUser(operator);
     setEditForm({ name: operator.name, email: operator.email });
@@ -127,24 +190,6 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    const fetchActiveUsers = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/active', {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setActiveUsers(data);
-        }
-      } catch (error) {
-        console.log("Could not fetch active users");
-      }
-    };
-    if (user && isAdminOrManager) fetchActiveUsers();
-  }, [user]);
-
   const fetchCompanyUsers = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -171,6 +216,7 @@ function App() {
             <ul>
               <li>Overview</li>
               <li>Operators</li>
+              <li>Schedule</li>
               <li>Settings</li>
             </ul>
             <div style={{ marginTop: 'auto' }}>
@@ -189,106 +235,26 @@ function App() {
             </div>
 
             <div className="data-section">
-              <h3>Currently Active Operators</h3>
-              {activeUsers.length > 0 ? (
+              <h3>All Schedules</h3>
+              <button onClick={() => setShowScheduleForm(!showScheduleForm)} className="action-btn">+ Create Schedule</button>
+              {showScheduleForm && (
+                <div style={{ marginBottom: '10px' }}>
+                  <input placeholder="Title" value={newSchedule.title} onChange={(e) => setNewSchedule({ ...newSchedule, title: e.target.value })} className="form-input" />
+                  <input placeholder="Description" value={newSchedule.description} onChange={(e) => setNewSchedule({ ...newSchedule, description: e.target.value })} className="form-input" />
+                  <input placeholder="Operator ID" value={newSchedule.operatorId} onChange={(e) => setNewSchedule({ ...newSchedule, operatorId: e.target.value })} className="form-input" />
+                  <button onClick={handleCreateSchedule} className="action-btn">Save Schedule</button>
+                </div>
+              )}
+              {schedules.length > 0 ? (
                 <ul className="data-list">
-                  {activeUsers.map((op) => (
-                    <li key={op.id}>{op.name} ({op.email})</li>
+                  {schedules.map((sch) => (
+                    <li key={sch.id}>{sch.title} (Operator {sch.operator?.id})</li>
                   ))}
                 </ul>
               ) : (
-                <p>No active operators right now.</p>
+                <p>No schedules yet.</p>
               )}
             </div>
-
-            <button onClick={fetchCompanyUsers} className="action-btn">
-              Show My Company Operators
-            </button>
-
-            {showCompany && (
-              <div className="data-section">
-                <h3>Company {user.companyId} Operators</h3>
-                {companyUsers.length > 0 ? (
-                  <ul className="data-list">
-                    {companyUsers.map((op) => (
-                      <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>{op.name} ({op.email})</span>
-                        <div>
-                          {isAdmin && (
-                            <button 
-                              onClick={() => handleDelete(op.id)}
-                              style={{ 
-                                backgroundColor: '#e53e3e', 
-                                color: 'white', 
-                                border: 'none', 
-                                padding: '4px 10px', 
-                                borderRadius: '4px', 
-                                cursor: 'pointer', 
-                                marginLeft: '8px' 
-                              }}
-                            >
-                              Delete
-                            </button>
-                          )}
-                          <button 
-                            onClick={() => handleEditClick(op)}
-                            style={{ 
-                              backgroundColor: '#3498db', 
-                              color: 'white', 
-                              border: 'none', 
-                              padding: '4px 10px', 
-                              borderRadius: '4px', 
-                              cursor: 'pointer', 
-                              marginLeft: '8px' 
-                            }}
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No operators found for this company.</p>
-                )}
-              </div>
-            )}
-
-            {editingUser && (
-              <div className="data-section" style={{ marginTop: '20px' }}>
-                <h3>Edit Operator</h3>
-                <input 
-                  type="text" 
-                  value={editForm.name} 
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
-                />
-                <input 
-                  type="email" 
-                  value={editForm.email} 
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
-                />
-                <button 
-                  onClick={handleSaveEdit}
-                  style={{ 
-                    backgroundColor: '#28a745', 
-                    color: 'white', 
-                    border: 'none', 
-                    padding: '10px 20px', 
-                    cursor: 'pointer' 
-                  }}
-                >
-                  Save Changes
-                </button>
-                <button 
-                  onClick={() => setEditingUser(null)}
-                  style={{ marginLeft: '10px', padding: '10px 20px', cursor: 'pointer' }}
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
           </div>
         </div>
       );
@@ -321,7 +287,15 @@ function App() {
 
           <div className="data-section">
             <h3>My Schedules</h3>
-            <p>No schedules available right now.</p>
+            {schedules.length > 0 ? (
+              <ul className="data-list">
+                {schedules.map((sch) => (
+                  <li key={sch.id}>{sch.title}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No schedules available right now.</p>
+            )}
           </div>
         </div>
       </div>
@@ -335,11 +309,7 @@ function App() {
         <form onSubmit={isRegistering ? handleRegister : handleLogin}>
           {isRegistering && (
             <div className="form-group">
-              <select 
-                value={role} 
-                onChange={(e) => setRole(e.target.value)} 
-                className="form-input"
-              >
+              <select value={role} onChange={(e) => setRole(e.target.value)} className="form-input">
                 <option value="USER">User</option>
                 <option value="MANAGER">Manager</option>
                 <option value="ADMIN">Admin</option>

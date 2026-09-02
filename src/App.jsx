@@ -213,6 +213,9 @@ function App() {
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
     setSchedules([]);
     setRateUser(null);
+        setShowForgotPassword(false); // Reset the forgot password form
+    setForgotEmail('');           // Clear the email input
+    setForgotMessage('');         // Clear the message
     setForgotMessage('');
   };
 

@@ -17,8 +17,8 @@ function App() {
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [newSchedule, setNewSchedule] = useState({ title: '', description: '', companyId: '', operatorId: '', status: '' });
   
-  // Added a state to track which page is active
-  const [activePage, setActivePage] = useState('Overview');
+  // Added state for switching pages on User Dashboard too!
+  const [activePage, setActivePage] = useState('My Profile');
 
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
@@ -208,7 +208,6 @@ function App() {
           <div className="sidebar">
             <h2>My Dashboard</h2>
             <ul>
-              {/* Added onClick to switch pages */}
               <li onClick={() => setActivePage('Overview')}>Overview</li>
               <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
               <li onClick={() => setActivePage('Schedule')}>Schedule</li>
@@ -220,7 +219,6 @@ function App() {
           </div>
 
           <div className="main-content">
-            {/* SHOW OVERVIEW PAGE */}
             {activePage === 'Overview' && (
               <>
                 <h1 className="dashboard-header">Welcome, {user.name}!</h1>
@@ -234,7 +232,6 @@ function App() {
               </>
             )}
 
-            {/* SHOW OPERATORS PAGE */}
             {activePage === 'Operators' && (
               <>
                 <h1 className="dashboard-header">Company Operators</h1>
@@ -324,7 +321,6 @@ function App() {
               </>
             )}
 
-            {/* SHOW SCHEDULE PAGE */}
             {activePage === 'Schedule' && (
               <>
                 <h1 className="dashboard-header">All Schedules</h1>
@@ -360,9 +356,10 @@ function App() {
       <div className="dashboard">
         <div className="sidebar">
           <h2>My Dashboard</h2>
+          {/* Added activePage state and onClick for User */}
           <ul>
-            <li>My Profile</li>
-            <li>My Schedules</li>
+            <li onClick={() => setActivePage('My Profile')}>My Profile</li>
+            <li onClick={() => setActivePage('My Schedules')}>My Schedules</li>
             <li>Settings</li>
           </ul>
           <div style={{ marginTop: 'auto' }}>
@@ -371,27 +368,35 @@ function App() {
         </div>
 
         <div className="main-content">
-          <h1 className="dashboard-header">Welcome, {user.name}!</h1>
+          {activePage === 'My Profile' && (
+            <>
+              <h1 className="dashboard-header">Welcome, {user.name}!</h1>
 
-          <div className="profile-card">
-            <h3>My Profile Details</h3>
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Company ID:</strong> {user.companyId}</p>
-            <p><strong>Role:</strong> {user.role}</p>
-          </div>
+              <div className="profile-card">
+                <h3>My Profile Details</h3>
+                <p><strong>Email:</strong> {user.email}</p>
+                <p><strong>Company ID:</strong> {user.companyId}</p>
+                <p><strong>Role:</strong> {user.role}</p>
+              </div>
+            </>
+          )}
 
-          <div className="data-section">
-            <h3>My Schedules</h3>
-            {schedules.length > 0 ? (
-              <ul className="data-list">
-                {schedules.map((sch) => (
-                  <li key={sch.id}>{sch.title}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No schedules available right now.</p>
-            )}
-          </div>
+          {activePage === 'My Schedules' && (
+            <>
+              <h1 className="dashboard-header">My Schedules</h1>
+              <div className="data-section">
+                {schedules.length > 0 ? (
+                  <ul className="data-list">
+                    {schedules.map((sch) => (
+                      <li key={sch.id}>{sch.title}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No schedules available right now.</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     );

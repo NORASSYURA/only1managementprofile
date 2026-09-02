@@ -16,17 +16,17 @@ function App() {
   const [schedules, setSchedules] = useState([]);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [newSchedule, setNewSchedule] = useState({ title: '', description: '', companyId: '', operatorId: '', status: '' });
+  
+  // Added a state to track which page is active
+  const [activePage, setActivePage] = useState('Overview');
 
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
 
-  // Fetch schedules based on user role
   const fetchSchedules = async () => {
     try {
       const token = localStorage.getItem('token');
-      // Admin/Manager sees all company schedules
-      // Operator sees their own schedules
       const url = isAdminOrManager 
         ? `https://operator-backend-1jjp.onrender.com/api/schedule/company/${user.companyId}`
         : `https://operator-backend-1jjp.onrender.com/api/schedule/operator/${user.id}`;
@@ -48,7 +48,6 @@ function App() {
     }
   }, [user]);
 
-  // Create schedule
   const handleCreateSchedule = async () => {
     if (!newSchedule.title || !newSchedule.operatorId) {
       alert("Please fill in title and operator ID");
@@ -77,7 +76,6 @@ function App() {
     }
   };
 
-  // Login
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -98,7 +96,6 @@ function App() {
     }
   };
 
-  // Register
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
@@ -120,7 +117,6 @@ function App() {
     }
   };
 
-  // Logout
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -138,7 +134,6 @@ function App() {
     setSchedules([]);
   };
 
-  // Delete
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this operator?")) return;
     try {
@@ -159,7 +154,6 @@ function App() {
     }
   };
 
-  // Edit
   const handleEditClick = (operator) => {
     setEditingUser(operator);
     setEditForm({ name: operator.name, email: operator.email });
@@ -214,9 +208,10 @@ function App() {
           <div className="sidebar">
             <h2>My Dashboard</h2>
             <ul>
-              <li>Overview</li>
-              <li>Operators</li>
-              <li>Schedule</li>
+              {/* Added onClick to switch pages */}
+              <li onClick={() => setActivePage('Overview')}>Overview</li>
+              <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
+              <li onClick={() => setActivePage('Schedule')}>Schedule</li>
               <li>Settings</li>
             </ul>
             <div style={{ marginTop: 'auto' }}>
@@ -225,36 +220,136 @@ function App() {
           </div>
 
           <div className="main-content">
-            <h1 className="dashboard-header">Welcome, {user.name}!</h1>
+            {/* SHOW OVERVIEW PAGE */}
+            {activePage === 'Overview' && (
+              <>
+                <h1 className="dashboard-header">Welcome, {user.name}!</h1>
 
-            <div className="profile-card">
-              <h3>Profile Details</h3>
-              <p><strong>Email:</strong> {user.email}</p>
-              <p><strong>Company ID:</strong> {user.companyId}</p>
-              <p><strong>Role:</strong> {user.role}</p>
-            </div>
-
-            <div className="data-section">
-              <h3>All Schedules</h3>
-              <button onClick={() => setShowScheduleForm(!showScheduleForm)} className="action-btn">+ Create Schedule</button>
-              {showScheduleForm && (
-                <div style={{ marginBottom: '10px' }}>
-                  <input placeholder="Title" value={newSchedule.title} onChange={(e) => setNewSchedule({ ...newSchedule, title: e.target.value })} className="form-input" />
-                  <input placeholder="Description" value={newSchedule.description} onChange={(e) => setNewSchedule({ ...newSchedule, description: e.target.value })} className="form-input" />
-                  <input placeholder="Operator ID" value={newSchedule.operatorId} onChange={(e) => setNewSchedule({ ...newSchedule, operatorId: e.target.value })} className="form-input" />
-                  <button onClick={handleCreateSchedule} className="action-btn">Save Schedule</button>
+                <div className="profile-card">
+                  <h3>Profile Details</h3>
+                  <p><strong>Email:</strong> {user.email}</p>
+                  <p><strong>Company ID:</strong> {user.companyId}</p>
+                  <p><strong>Role:</strong> {user.role}</p>
                 </div>
-              )}
-              {schedules.length > 0 ? (
-                <ul className="data-list">
-                  {schedules.map((sch) => (
-                    <li key={sch.id}>{sch.title} (Operator {sch.operator?.id})</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No schedules yet.</p>
-              )}
-            </div>
+              </>
+            )}
+
+            {/* SHOW OPERATORS PAGE */}
+            {activePage === 'Operators' && (
+              <>
+                <h1 className="dashboard-header">Company Operators</h1>
+                {showCompany && (
+                  <div className="data-section">
+                    <h3>Company {user.companyId} Operators</h3>
+                    {companyUsers.length > 0 ? (
+                      <ul className="data-list">
+                        {companyUsers.map((op) => (
+                          <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>{op.name} ({op.email})</span>
+                            <div>
+                              {isAdmin && (
+                                <button 
+                                  onClick={() => handleDelete(op.id)}
+                                  style={{ 
+                                    backgroundColor: '#e53e3e', 
+                                    color: 'white', 
+                                    border: 'none', 
+                                    padding: '4px 10px', 
+                                    borderRadius: '4px', 
+                                    cursor: 'pointer', 
+                                    marginLeft: '8px' 
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => handleEditClick(op)}
+                                style={{ 
+                                  backgroundColor: '#3498db', 
+                                  color: 'white', 
+                                  border: 'none', 
+                                  padding: '4px 10px', 
+                                  borderRadius: '4px', 
+                                  cursor: 'pointer', 
+                                  marginLeft: '8px' 
+                                }}
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>No operators found for this company.</p>
+                    )}
+                  </div>
+                )}
+                {editingUser && (
+                  <div className="data-section" style={{ marginTop: '20px' }}>
+                    <h3>Edit Operator</h3>
+                    <input 
+                      type="text" 
+                      value={editForm.name} 
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
+                    />
+                    <input 
+                      type="email" 
+                      value={editForm.email} 
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
+                    />
+                    <button 
+                      onClick={handleSaveEdit}
+                      style={{ 
+                        backgroundColor: '#28a745', 
+                        color: 'white', 
+                        border: 'none', 
+                        padding: '10px 20px', 
+                        cursor: 'pointer' 
+                      }}
+                    >
+                      Save Changes
+                    </button>
+                    <button 
+                      onClick={() => setEditingUser(null)}
+                      style={{ marginLeft: '10px', padding: '10px 20px', cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* SHOW SCHEDULE PAGE */}
+            {activePage === 'Schedule' && (
+              <>
+                <h1 className="dashboard-header">All Schedules</h1>
+                <div className="data-section">
+                  <button onClick={() => setShowScheduleForm(!showScheduleForm)} className="action-btn">+ Create Schedule</button>
+                  {showScheduleForm && (
+                    <div style={{ marginBottom: '10px' }}>
+                      <input placeholder="Title" value={newSchedule.title} onChange={(e) => setNewSchedule({ ...newSchedule, title: e.target.value })} className="form-input" />
+                      <input placeholder="Description" value={newSchedule.description} onChange={(e) => setNewSchedule({ ...newSchedule, description: e.target.value })} className="form-input" />
+                      <input placeholder="Operator ID" value={newSchedule.operatorId} onChange={(e) => setNewSchedule({ ...newSchedule, operatorId: e.target.value })} className="form-input" />
+                      <button onClick={handleCreateSchedule} className="action-btn">Save Schedule</button>
+                    </div>
+                  )}
+                  {schedules.length > 0 ? (
+                    <ul className="data-list">
+                      {schedules.map((sch) => (
+                        <li key={sch.id}>{sch.title} (Operator {sch.operator?.id})</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No schedules yet.</p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       );

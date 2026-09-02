@@ -10,6 +10,39 @@ function App() {
   const [companyUsers, setCompanyUsers] = useState([]);
   const [showCompany, setShowCompany] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({ name: '', email: '' });
+
+  const handleEditClick = (operator) => {
+    setEditingUser(operator);
+    setEditForm({ name: operator.name, email: operator.email });
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${editingUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(editForm),
+      });
+
+      if (response.ok) {
+        // Update the list locally
+        setCompanyUsers(companyUsers.map(op => op.id === editingUser.id ? { ...op, ...editForm } : op));
+        setActiveUsers(activeUsers.map(op => op.id === editingUser.id ? { ...op, ...editForm } : op));
+        setEditingUser(null); // Close the form
+        alert("User updated successfully!");
+      } else {
+        alert("Failed to update user.");
+      }
+    } catch (error) {
+      alert("Error updating user.");
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -186,6 +219,20 @@ function App() {
                       >
                         Delete
                       </button>
+                                            <button 
+                        onClick={() => handleEditClick(op)}
+                        style={{ 
+                          backgroundColor: '#3498db', 
+                          color: 'white', 
+                          border: 'none', 
+                          padding: '4px 10px', 
+                          borderRadius: '4px', 
+                          cursor: 'pointer', 
+                          marginLeft: '8px' 
+                        }}
+                      >
+                        Edit
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -195,6 +242,41 @@ function App() {
             </div>
           )}
         </div>
+                {editingUser && (
+          <div className="data-section" style={{ marginTop: '20px' }}>
+            <h3>Edit Operator</h3>
+            <input 
+              type="text" 
+              value={editForm.name} 
+              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
+            />
+            <input 
+              type="email" 
+              value={editForm.email} 
+              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
+            />
+            <button 
+              onClick={handleSaveEdit}
+              style={{ 
+                backgroundColor: '#28a745', 
+                color: 'white', 
+                border: 'none', 
+                padding: '10px 20px', 
+                cursor: 'pointer' 
+              }}
+            >
+              Save Changes
+            </button>
+            <button 
+              onClick={() => setEditingUser(null)}
+              style={{ marginLeft: '10px', padding: '10px 20px', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     );
   }

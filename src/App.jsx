@@ -159,6 +159,7 @@ function App() {
     }
     localStorage.removeItem('token');
     setUser(null);
+    setActivePage('Overview');
     setMessage(''); setEmail(''); setPassword('');
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
     setSchedules([]);

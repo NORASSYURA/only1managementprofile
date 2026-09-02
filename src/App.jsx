@@ -22,11 +22,13 @@ function App() {
   const [newPassword, setNewPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
   const [activePage, setActivePage] = useState('Overview');
-  
-  // Forgot Password State
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
+  
+  // New States for Profile Update
+  const [homeAddress, setHomeAddress] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
@@ -42,14 +44,33 @@ function App() {
       });
       const data = await response.json();
       if (response.ok) {
-        // Set the message to show the temp password and keep the form open
         setForgotMessage(`Password reset successful! Please use this temporary password: ${data.message.split(': ')[1]} to log in, then change it in Settings.`);
-        // Do NOT close the form here!
       } else {
         setForgotMessage(`Error: ${data.message}`);
       }
     } catch (error) {
       setForgotMessage('Server is not running or CORS error!');
+    }
+  };
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert("Profile updated successfully!");
+        setUser(data); // Update the user state with the new details
+      } else {
+        alert("Failed to update profile.");
+      }
+    } catch (error) {
+      alert("Error updating profile.");
     }
   };
 
@@ -73,6 +94,8 @@ function App() {
 
   useEffect(() => {
     if (user) {
+      setHomeAddress(user.homeAddress || '');
+      setPhoneNumber(user.phoneNumber || '');
       fetchSchedules();
     }
   }, [user]);
@@ -82,10 +105,7 @@ function App() {
       const token = localStorage.getItem('token');
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${rateUser.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ name: rateUser.name, email: rateUser.email, rate: parseFloat(rateForm.rate) }),
       });
 
@@ -108,10 +128,7 @@ function App() {
       const token = localStorage.getItem('token');
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/change-password/${user.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ password: oldPassword, newPassword: newPassword }),
       });
       const data = await response.json();
@@ -136,10 +153,7 @@ function App() {
       const token = localStorage.getItem('token');
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/schedule', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ ...newSchedule, companyId: user.companyId }),
       });
       if (response.ok) {
@@ -155,7 +169,7 @@ function App() {
     }
   };
 
-    const handleLogin = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/login', {
@@ -167,7 +181,6 @@ function App() {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
-        // Use the role from the response data directly!
         setActivePage(data.user.role === 'ADMIN' || data.user.role === 'MANAGER' ? 'Overview' : 'My Profile');
       } else {
         setMessage(`Error: ${data.message}`);
@@ -176,13 +189,14 @@ function App() {
       setMessage('Server is not running or CORS error!');
     }
   };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role, homeAddress, phoneNumber }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -213,9 +227,8 @@ function App() {
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
     setSchedules([]);
     setRateUser(null);
-        setShowForgotPassword(false); // Reset the forgot password form
-    setForgotEmail('');           // Clear the email input
-    setForgotMessage('');         // Clear the message
+    setShowForgotPassword(false);
+    setForgotEmail('');
     setForgotMessage('');
   };
 
@@ -249,10 +262,7 @@ function App() {
       const token = localStorage.getItem('token');
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${editingUser.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(editForm),
       });
 
@@ -501,6 +511,27 @@ function App() {
                 <p><strong>Role:</strong> {user.role}</p>
                 <p><strong>Rate:</strong> ${user.rate ? user.rate : '0.00'}</p>
               </div>
+              {/* New: Update Profile Form */}
+              <div className="data-section" style={{ marginTop: '20px' }}>
+                <h3>Update My Profile</h3>
+                <form onSubmit={handleProfileUpdate}>
+                  <input 
+                    type="text" 
+                    placeholder="Home Address" 
+                    value={homeAddress} 
+                    onChange={(e) => setHomeAddress(e.target.value)} 
+                    className="form-input" 
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Phone Number" 
+                    value={phoneNumber} 
+                    onChange={(e) => setPhoneNumber(e.target.value)} 
+                    className="form-input" 
+                  />
+                  <button type="submit" className="action-btn">Update Profile</button>
+                </form>
+              </div>
             </>
           )}
 
@@ -553,6 +584,8 @@ function App() {
                 <option value="ADMIN">Admin</option>
               </select>
               <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} className="form-input" />
+              <input type="text" placeholder="Home Address" value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} className="form-input" />
+              <input type="text" placeholder="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="form-input" />
             </div>
           )}
           <div className="form-group">
@@ -563,7 +596,6 @@ function App() {
           </div>
           <button type="submit" className="login-btn">{isRegistering ? 'Sign Up' : 'Login'}</button>
         </form>
-        {/* Forgot Password Form */}
         <div style={{ textAlign: 'center', marginTop: '10px' }}>
           <button onClick={() => setShowForgotPassword(true)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Forgot Password?</button>
         </div>

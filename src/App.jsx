@@ -22,10 +22,35 @@ function App() {
   const [newPassword, setNewPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
   const [activePage, setActivePage] = useState('Overview');
+  
+  // Forgot Password State
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotMessage, setForgotMessage] = useState('');
 
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setForgotMessage(data.message);
+        setShowForgotPassword(false);
+      } else {
+        setForgotMessage(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      setForgotMessage('Server is not running or CORS error!');
+    }
+  };
 
   const fetchSchedules = async () => {
     try {
@@ -51,31 +76,6 @@ function App() {
     }
   }, [user]);
 
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/change-password/${user.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ password: oldPassword, newPassword: newPassword }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setPasswordMessage('Password changed successfully!');
-        setOldPassword('');
-        setNewPassword('');
-      } else {
-        setPasswordMessage(`Error: ${data.message}`);
-      }
-    } catch (error) {
-      setPasswordMessage('Error changing password');
-    }
-  };
-
   const handleSaveRate = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -98,6 +98,31 @@ function App() {
       }
     } catch (error) {
       alert("Error updating rate.");
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/change-password/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password: oldPassword, newPassword: newPassword }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setPasswordMessage('Password changed successfully!');
+        setOldPassword('');
+        setNewPassword('');
+      } else {
+        setPasswordMessage(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      setPasswordMessage('Error changing password');
     }
   };
 
@@ -533,6 +558,19 @@ function App() {
           </div>
           <button type="submit" className="login-btn">{isRegistering ? 'Sign Up' : 'Login'}</button>
         </form>
+        {/* Forgot Password Link */}
+        <div style={{ textAlign: 'center', marginTop: '10px' }}>
+          <button onClick={() => setShowForgotPassword(true)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Forgot Password?</button>
+        </div>
+        {showForgotPassword && (
+          <div className="form-group" style={{ marginTop: '10px' }}>
+            <form onSubmit={handleForgotPassword}>
+              <input type="email" placeholder="Enter your email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} className="form-input" />
+              <button type="submit" className="login-btn" style={{ marginTop: '10px' }}>Reset Password</button>
+            </form>
+            {forgotMessage && <p style={{ color: forgotMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px', textAlign: 'center' }}>{forgotMessage}</p>}
+          </div>
+        )}
         <div className="error-msg">{message}</div>
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
           {isRegistering ? (

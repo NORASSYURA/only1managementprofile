@@ -42,8 +42,9 @@ function App() {
       });
       const data = await response.json();
       if (response.ok) {
-        setForgotMessage(data.message);
-        setShowForgotPassword(false);
+        // Set the message to show the temp password and keep the form open
+        setForgotMessage(`Password reset successful! Please use this temporary password: ${data.message.split(': ')[1]} to log in, then change it in Settings.`);
+        // Do NOT close the form here!
       } else {
         setForgotMessage(`Error: ${data.message}`);
       }
@@ -212,6 +213,7 @@ function App() {
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
     setSchedules([]);
     setRateUser(null);
+    setForgotMessage('');
   };
 
   const handleDelete = async (id) => {
@@ -558,17 +560,29 @@ function App() {
           </div>
           <button type="submit" className="login-btn">{isRegistering ? 'Sign Up' : 'Login'}</button>
         </form>
-        {/* Forgot Password Link */}
+        {/* Forgot Password Form */}
         <div style={{ textAlign: 'center', marginTop: '10px' }}>
           <button onClick={() => setShowForgotPassword(true)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Forgot Password?</button>
         </div>
         {showForgotPassword && (
-          <div className="form-group" style={{ marginTop: '10px' }}>
+          <div style={{ marginTop: '10px' }}>
             <form onSubmit={handleForgotPassword}>
               <input type="email" placeholder="Enter your email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} className="form-input" />
               <button type="submit" className="login-btn" style={{ marginTop: '10px' }}>Reset Password</button>
             </form>
-            {forgotMessage && <p style={{ color: forgotMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px', textAlign: 'center' }}>{forgotMessage}</p>}
+            {forgotMessage && (
+              <p style={{ 
+                color: forgotMessage.includes('Error') ? '#e53e3e' : '#38a169', 
+                marginTop: '10px', 
+                textAlign: 'center',
+                fontWeight: 'bold',
+                padding: '10px',
+                borderRadius: '5px',
+                backgroundColor: forgotMessage.includes('Error') ? '#fce4e4' : '#e6fffa'
+              }}>
+                {forgotMessage}
+              </p>
+            )}
           </div>
         )}
         <div className="error-msg">{message}</div>

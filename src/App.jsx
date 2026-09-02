@@ -14,7 +14,7 @@ function App() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8080/api/operators/login', {
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -34,7 +34,7 @@ function App() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8080/api/operators/register', {
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
@@ -55,7 +55,7 @@ function App() {
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:8080/api/operators/logout/${user.id}`, {
+      await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/logout/${user.id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -73,13 +73,12 @@ function App() {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8080/api/operators/${id}`, {
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (response.ok) {
-        // Update the list without the deleted user
         setCompanyUsers(companyUsers.filter(op => op.id !== id));
         setActiveUsers(activeUsers.filter(op => op.id !== id));
       } else {
@@ -94,7 +93,7 @@ function App() {
     const fetchActiveUsers = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:8080/api/operators/active', {
+        const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/active', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (response.ok) {
@@ -111,9 +110,10 @@ function App() {
   const fetchCompanyUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8080/api/operators/company/${user.companyId}`, {
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/company/${user.companyId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
+
       if (response.ok) {
         const data = await response.json();
         setCompanyUsers(data);

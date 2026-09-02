@@ -155,7 +155,7 @@ function App() {
     }
   };
 
-  const handleLogin = async (e) => {
+    const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/login', {
@@ -167,7 +167,8 @@ function App() {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
-        setActivePage(isAdminOrManager ? 'Overview' : 'My Profile');
+        // Use the role from the response data directly!
+        setActivePage(data.user.role === 'ADMIN' || data.user.role === 'MANAGER' ? 'Overview' : 'My Profile');
       } else {
         setMessage(`Error: ${data.message}`);
       }
@@ -175,7 +176,6 @@ function App() {
       setMessage('Server is not running or CORS error!');
     }
   };
-
   const handleRegister = async (e) => {
     e.preventDefault();
     try {

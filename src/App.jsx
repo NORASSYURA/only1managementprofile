@@ -25,52 +25,60 @@ function App() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
-  
-  // New States for Profile Update
   const [homeAddress, setHomeAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  
+  // Job Posting State
+  const [jobs, setJobs] = useState([]);
+  const [showJobForm, setShowJobForm] = useState(false);
+  const [newJob, setNewJob] = useState({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
 
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
 
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
+  const fetchJobs = async () => {
     try {
-      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail }),
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/jobs/company/${user.companyId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
       });
-      const data = await response.json();
       if (response.ok) {
-        setForgotMessage(`Password reset successful! Please use this temporary password: ${data.message.split(': ')[1]} to log in, then change it in Settings.`);
-      } else {
-        setForgotMessage(`Error: ${data.message}`);
+        const data = await response.json();
+        setJobs(data);
       }
     } catch (error) {
-      setForgotMessage('Server is not running or CORS error!');
+      console.log("Could not fetch jobs");
     }
   };
 
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (user) {
+      setHomeAddress(user.homeAddress || '');
+      setPhoneNumber(user.phoneNumber || '');
+      fetchSchedules();
+      fetchJobs();
+    }
+  }, [user]);
+
+  const handleCreateJob = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${user.id}`, {
-        method: 'PUT',
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/jobs/create', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber }),
+        body: JSON.stringify({ ...newJob, companyId: user.companyId }),
       });
-      const data = await response.json();
       if (response.ok) {
-        alert("Profile updated successfully!");
-        setUser(data); // Update the user state with the new details
+        alert("Job posted successfully!");
+        setNewJob({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
+        setShowJobForm(false);
+        fetchJobs();
       } else {
-        alert("Failed to update profile.");
+        alert("Failed to create job.");
       }
     } catch (error) {
-      alert("Error updating profile.");
+      alert("Error creating job.");
     }
   };
 
@@ -92,13 +100,26 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      setHomeAddress(user.homeAddress || '');
-      setPhoneNumber(user.phoneNumber || '');
-      fetchSchedules();
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert("Profile updated successfully!");
+        setUser(data);
+      } else {
+        alert("Failed to update profile.");
+      }
+    } catch (error) {
+      alert("Error updating profile.");
     }
-  }, [user]);
+  };
 
   const handleSaveRate = async () => {
     try {
@@ -230,6 +251,7 @@ function App() {
     setShowForgotPassword(false);
     setForgotEmail('');
     setForgotMessage('');
+    setJobs([]);
   };
 
   const handleDelete = async (id) => {
@@ -306,6 +328,7 @@ function App() {
               <li onClick={() => setActivePage('Overview')}>Overview</li>
               <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
               <li onClick={() => setActivePage('Schedule')}>Schedule</li>
+              <li onClick={() => setActivePage('Jobs')}>Jobs</li>
               <li onClick={() => setActivePage('Settings')}>Settings</li>
             </ul>
             <div style={{ marginTop: 'auto' }}>
@@ -466,6 +489,38 @@ function App() {
               </>
             )}
 
+            {activePage === 'Jobs' && (
+              <>
+                <h1 className="dashboard-header">Job Board</h1>
+                <div className="data-section">
+                  <button onClick={() => setShowJobForm(!showJobForm)} className="action-btn">+ Post Job</button>
+                  {showJobForm && (
+                    <div style={{ marginBottom: '10px' }}>
+                      <input placeholder="Title (e.g. Relief, Adhoc)" value={newJob.title} onChange={(e) => setNewJob({ ...newJob, title: e.target.value })} className="form-input" />
+                      <input placeholder="Description" value={newJob.description} onChange={(e) => setNewJob({ ...newJob, description: e.target.value })} className="form-input" />
+                      <input placeholder="Location" value={newJob.location} onChange={(e) => setNewJob({ ...newJob, location: e.target.value })} className="form-input" />
+                      <input type="date" placeholder="Start Date" value={newJob.startDate} onChange={(e) => setNewJob({ ...newJob, startDate: e.target.value })} className="form-input" />
+                      <input type="date" placeholder="End Date" value={newJob.endDate} onChange={(e) => setNewJob({ ...newJob, endDate: e.target.value })} className="form-input" />
+                      <input placeholder="Rate ($)" value={newJob.rate} onChange={(e) => setNewJob({ ...newJob, rate: e.target.value })} className="form-input" />
+                      <button onClick={handleCreateJob} className="action-btn">Post Job</button>
+                    </div>
+                  )}
+                  {jobs.length > 0 ? (
+                    <ul className="data-list">
+                      {jobs.map((job) => (
+                        <li key={job.id}>
+                          <strong>{job.title}</strong> - {job.location} - ${job.rate} 
+                          <br />{job.description}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No jobs posted yet.</p>
+                  )}
+                </div>
+              </>
+            )}
+
             {activePage === 'Settings' && (
               <>
                 <h1 className="dashboard-header">Settings</h1>
@@ -493,6 +548,7 @@ function App() {
           <ul>
             <li onClick={() => setActivePage('My Profile')}>My Profile</li>
             <li onClick={() => setActivePage('My Schedules')}>My Schedules</li>
+            <li onClick={() => setActivePage('Jobs')}>Jobs</li>
             <li onClick={() => setActivePage('Settings')}>Settings</li>
           </ul>
           <div style={{ marginTop: 'auto' }}>
@@ -511,7 +567,6 @@ function App() {
                 <p><strong>Role:</strong> {user.role}</p>
                 <p><strong>Rate:</strong> ${user.rate ? user.rate : '0.00'}</p>
               </div>
-              {/* New: Update Profile Form */}
               <div className="data-section" style={{ marginTop: '20px' }}>
                 <h3>Update My Profile</h3>
                 <form onSubmit={handleProfileUpdate}>
@@ -547,6 +602,27 @@ function App() {
                   </ul>
                 ) : (
                   <p>No schedules available right now.</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {activePage === 'Jobs' && (
+            <>
+              <h1 className="dashboard-header">Job Board</h1>
+              <div className="data-section">
+                {jobs.length > 0 ? (
+                  <ul className="data-list">
+                    {jobs.map((job) => (
+                      <li key={job.id}>
+                        <strong>{job.title}</strong> - {job.location} - ${job.rate} 
+                        <br />{job.description}
+                        <br /><button className="action-btn">Sign Up</button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No jobs available.</p>
                 )}
               </div>
             </>
@@ -605,19 +681,7 @@ function App() {
               <input type="email" placeholder="Enter your email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} className="form-input" />
               <button type="submit" className="login-btn" style={{ marginTop: '10px' }}>Reset Password</button>
             </form>
-            {forgotMessage && (
-              <p style={{ 
-                color: forgotMessage.includes('Error') ? '#e53e3e' : '#38a169', 
-                marginTop: '10px', 
-                textAlign: 'center',
-                fontWeight: 'bold',
-                padding: '10px',
-                borderRadius: '5px',
-                backgroundColor: forgotMessage.includes('Error') ? '#fce4e4' : '#e6fffa'
-              }}>
-                {forgotMessage}
-              </p>
-            )}
+            {forgotMessage && <p style={{ color: forgotMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px', textAlign: 'center', fontWeight: 'bold', padding: '10px', borderRadius: '5px', backgroundColor: forgotMessage.includes('Error') ? '#fce4e4' : '#e6fffa' }}>{forgotMessage}</p>}
           </div>
         )}
         <div className="error-msg">{message}</div>

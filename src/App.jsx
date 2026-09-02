@@ -10,6 +10,7 @@ function App() {
   const [companyUsers, setCompanyUsers] = useState([]);
   const [showCompany, setShowCompany] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [role, setRole] = useState('USER');
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', email: '' });
 
@@ -17,7 +18,6 @@ function App() {
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
-  const isUser = !isAdminOrManager;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -25,7 +25,7 @@ function App() {
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password }), // FIXED: Removed role from login
       });
       const data = await response.json();
       if (response.ok) {
@@ -45,7 +45,7 @@ function App() {
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, role }), // FIXED: Added role here!
       });
       const data = await response.json();
       if (response.ok) {
@@ -335,6 +335,15 @@ function App() {
         <form onSubmit={isRegistering ? handleRegister : handleLogin}>
           {isRegistering && (
             <div className="form-group">
+              <select 
+                value={role} 
+                onChange={(e) => setRole(e.target.value)} 
+                className="form-input"
+              >
+                <option value="USER">User</option>
+                <option value="MANAGER">Manager</option>
+                <option value="ADMIN">Admin</option>
+              </select>
               <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} className="form-input" />
             </div>
           )}

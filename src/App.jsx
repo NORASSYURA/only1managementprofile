@@ -1138,8 +1138,9 @@ function App() {
     );
   }
 
+ }
+
   return (
-     return (
     <div className="login-container">
       <div className="login-box">
         <img src={LOGO_URL} alt="Company Logo" style={{ display: 'block', margin: '0 auto 15px', width: '150px', borderRadius: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }} />
@@ -1191,5 +1192,7 @@ function App() {
         </div>
       </div>
     </div>
-  ); 
+  );
+}
+
 export default App;

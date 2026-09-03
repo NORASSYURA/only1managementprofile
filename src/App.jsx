@@ -126,7 +126,7 @@ function App() {
   const fetchOffDays = async () => {
     try {
       const token = localStorage.getItem('token');
-            const url = isAdminOrManager 
+      const url = isAdminOrManager 
         ? `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`
         : `https://operator-backend-1jjp.onrender.com/api/offday/operator/${user.id}`;
       const response = await fetch(url, {
@@ -335,7 +335,6 @@ function App() {
         body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber }),
       });
       const data = await response.json();
-      console.log("Off Days Loaded:", data);
       if (response.ok) {
         alert("Profile updated successfully!");
         setUser(data);
@@ -408,7 +407,7 @@ function App() {
         setUser(data.user);
         localStorage.setItem('userData', JSON.stringify(data.user));
         setActivePage('Overview');
-        fetchOffDays(); // <--- ADD THIS LINE
+        fetchOffDays(); // Add this to load requests immediately
       } else {
         setMessage(`Error: ${data.message}`);
       }
@@ -823,7 +822,7 @@ function App() {
               </>
             )}
 
-                        {activePage === 'Requests' && (
+            {activePage === 'Requests' && (
               <>
                 <h1 className="dashboard-header">Off Day Requests</h1>
                 <div className="data-section">
@@ -834,7 +833,6 @@ function App() {
                           <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                           <br />Reason: {req.reason}
                           
-                          {/* ALL USERS (Admin/Manager/Operator) can Cancel if it is PENDING */}
                           {req.status === 'PENDING' && (
                             <button 
                               onClick={() => handleCancelOffDay(req.id)}
@@ -852,7 +850,6 @@ function App() {
                             </button>
                           )}
 
-                          {/* ONLY MANAGER can Approve/Reject */}
                           {isManager && req.status === 'PENDING' && (
                             <div style={{ marginTop: '10px', marginLeft: '10px', display: 'inline-block' }}>
                               <button onClick={() => handleApproveReject(req.id, 'APPROVED')} style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Approve</button>
@@ -862,12 +859,6 @@ function App() {
                         </li>
                       ))}
                     </ul>
-                  ) : (
-                    <p>No off day requests.</p>
-                  )}
-                </div>
-              </>
-            )}                    </ul>
                   ) : (
                     <p>No off day requests.</p>
                   )}

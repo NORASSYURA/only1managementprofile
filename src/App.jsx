@@ -68,30 +68,6 @@ function App() {
 
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
 
-  // Fetch All Data on User Load
-  useEffect(() => {
-    if (user) {
-      fetchSchedules();
-      fetchJobs();
-      fetchFeedback();
-      fetchOffDays();
-      fetchDocuments();
-    }
-  }, [user]);
-
-  // Restore User on Refresh
-  useEffect(() => {
-    const savedUser = localStorage.getItem('userData');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-        setActivePage('Overview');
-      } catch (e) {
-        localStorage.removeItem('userData');
-      }
-    }
-  }, []);
-
   const fetchSchedules = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -430,7 +406,7 @@ function App() {
         localStorage.setItem('token', data.token);
         setUser(data.user);
         localStorage.setItem('userData', JSON.stringify(data.user));
-        setActivePage('Overview');
+        setActivePage('Overview'); // ALL USERS LAND ON OVERVIEW
         fetchOffDays();
       } else {
         setMessage(`Error: ${data.message}`);
@@ -590,6 +566,29 @@ function App() {
     const request = myOffDayRequests.find(r => r.requestedDate === dateStr);
     return request ? request.status : null;
   };
+
+  // Restore User on Refresh
+  useEffect(() => {
+    const savedUser = localStorage.getItem('userData');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+        setActivePage('Overview');
+      } catch (e) {
+        localStorage.removeItem('userData');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchSchedules();
+      fetchJobs();
+      fetchFeedback();
+      fetchOffDays();
+      fetchDocuments();
+    }
+  }, [user]);
 
   if (user) {
     if (isAdminOrManager) {
@@ -856,12 +855,10 @@ function App() {
                           <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                           <br />Reason: {req.reason}
                           
-                          {/* Show Cancel button if PENDING */}
                           {req.status === 'PENDING' && (
                             <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>Cancel</button>
                           )}
 
-                          {/* ONLY Manager sees Approve/Reject */}
                           {isManager && req.status === 'PENDING' && (
                             <div style={{ marginTop: '10px', marginLeft: '10px', display: 'inline-block' }}>
                               <button onClick={() => handleApproveReject(req.id, 'APPROVED')} style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Approve</button>
@@ -976,6 +973,7 @@ function App() {
             <p style={{ fontSize: '12px', opacity: 0.8 }}>UEN: 53530731D</p>
           </div>
           <ul>
+            <li onClick={() => setActivePage('Overview')}>Overview</li>
             <li onClick={() => setActivePage('My Profile')}>My Profile</li>
             <li onClick={() => setActivePage('My Schedules')}>My Schedules</li>
             <li onClick={() => setActivePage('Jobs')}>Jobs</li>
@@ -990,6 +988,19 @@ function App() {
         </div>
 
         <div className="main-content">
+          {activePage === 'Overview' && (
+            <>
+              <h1 className="dashboard-header">Welcome, {user.name}!</h1>
+              <div className="profile-card">
+                <h3>Profile Details</h3>
+                <p><strong>Email:</strong> {user.email}</p>
+                <p><strong>Company ID:</strong> {user.companyId}</p>
+                <p><strong>Role:</strong> {user.role}</p>
+                <p><strong>Rate:</strong> ${user.rate ? user.rate : '0.00'}</p>
+              </div>
+            </>
+          )}
+
           {activePage === 'My Profile' && (
             <>
               <h1 className="dashboard-header">Welcome, {user.name}!</h1>

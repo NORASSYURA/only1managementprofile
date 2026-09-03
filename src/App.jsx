@@ -551,6 +551,7 @@ function App() {
                               >
                                 Edit
                               </button>
+                              <a href={`tel:${op.phoneNumber}`} style={{ marginLeft: '8px', backgroundColor: '#4CAF50', color: 'white', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '14px' }}>Call</a>
                             </div>
                           </li>
                         ))}

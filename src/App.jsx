@@ -34,10 +34,9 @@ function App() {
   const [myOffDayRequests, setMyOffDayRequests] = useState([]);
   const [showOffDayForm, setShowOffDayForm] = useState(false);
   const [newOffDay, setNewOffDay] = useState({ requestedDate: '', reason: '' });
-
-  // Calendar State
-  const [currentDate, setCurrentDate] = useState(new Date());
-    const [publicHolidays, setPublicHolidays] = useState([
+  
+  // Hardcoded Singapore Public Holidays for 2026
+  const [publicHolidays, setPublicHolidays] = useState([
     { date: '2026-01-01', name: 'New Year's Day' },
     { date: '2026-02-17', name: 'Chinese New Year' },
     { date: '2026-02-18', name: 'Chinese New Year' },
@@ -51,24 +50,32 @@ function App() {
     { date: '2026-12-25', name: 'Christmas Day' }
   ]);
 
+  // Calendar State
+  const [currentDate, setCurrentDate] = useState(new Date());
+
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
 
-  // Fetch Singapore Public Holidays
-  useEffect(() => {
-    const fetchHolidays = async () => {
-      try {
-        const year = currentDate.getFullYear();
-        const response = await fetch(`https://date.nager.at/Api/v2/PublicHolidays/${year}/SG`);
-        const data = await response.json();
-        setPublicHolidays(data);
-      } catch (error) {
-        console.log("Could not fetch holidays");
-      }
-    };
-    fetchHolidays();
-  }, [currentDate]);
+  // Helper functions for calendar
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const isPublicHoliday = (day) => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return publicHolidays.find(h => h.date === dateStr);
+  };
+
+  const getOffDayStatus = (day) => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const request = myOffDayRequests.find(r => r.requestedDate === dateStr);
+    return request ? request.status : null;
+  };
 
   const fetchSchedules = async () => {
     try {
@@ -410,26 +417,6 @@ function App() {
     } catch (error) {
       console.log("Could not fetch company users");
     }
-  };
-
-  // Calendar Helper Functions
-  const getDaysInMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  };
-
-  const isPublicHoliday = (day) => {
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return publicHolidays.find(h => h.date === dateStr);
-  };
-
-  const getOffDayStatus = (day) => {
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const request = myOffDayRequests.find(r => r.requestedDate === dateStr);
-    return request ? request.status : null;
   };
 
   if (user) {

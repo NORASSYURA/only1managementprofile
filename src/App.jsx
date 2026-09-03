@@ -407,7 +407,7 @@ function App() {
         setUser(data.user);
         localStorage.setItem('userData', JSON.stringify(data.user));
         setActivePage('Overview');
-        fetchOffDays(); // Add this to load requests immediately
+        fetchOffDays();
       } else {
         setMessage(`Error: ${data.message}`);
       }
@@ -583,7 +583,8 @@ function App() {
               <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
               <li onClick={() => setActivePage('Schedule')}>Schedule</li>
               <li onClick={() => setActivePage('Jobs')}>Jobs</li>
-              <li onClick={() => { setActivePage('Requests'); fetchOffDays(); }}>                Off Day Requests
+              <li onClick={() => { setActivePage('Requests'); fetchOffDays(); }}>
+                Off Day Requests
                 {offDayRequests.some(r => r.status === 'PENDING') && (
                   <span className="blinking"> 🔴</span>
                 )}
@@ -821,7 +822,7 @@ function App() {
               </>
             )}
 
-                        {activePage === 'Requests' && (
+            {activePage === 'Requests' && (
               <>
                 <h1 className="dashboard-header">Off Day Requests</h1>
                 <div className="data-section">
@@ -831,8 +832,6 @@ function App() {
                         <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
                           <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                           <br />Reason: {req.reason}
-                          
-                          {/* Admin/Operator can Cancel PENDING only */}
                           {req.status === 'PENDING' && (
                             <button 
                               onClick={() => handleCancelOffDay(req.id)}
@@ -849,8 +848,6 @@ function App() {
                               Cancel
                             </button>
                           )}
-
-                          {/* Manager can Approve/Reject PENDING only */}
                           {isManager && req.status === 'PENDING' && (
                             <div style={{ marginTop: '10px', marginLeft: '10px', display: 'inline-block' }}>
                               <button onClick={() => handleApproveReject(req.id, 'APPROVED')} style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Approve</button>
@@ -864,8 +861,6 @@ function App() {
                     <p>No off day requests.</p>
                   )}
                 </div>
-              </>
-            )}                </div>
               </>
             )}
 
@@ -970,7 +965,8 @@ function App() {
             <li onClick={() => setActivePage('My Profile')}>My Profile</li>
             <li onClick={() => setActivePage('My Schedules')}>My Schedules</li>
             <li onClick={() => setActivePage('Jobs')}>Jobs</li>
-            <li onClick={() => { setActivePage('My Off Days'); fetchOffDays(); }}>My Off Days</li>            <li onClick={() => setActivePage('Feedback')}>Feedback</li>
+            <li onClick={() => { setActivePage('My Off Days'); fetchOffDays(); }}>My Off Days</li>
+            <li onClick={() => setActivePage('Feedback')}>Feedback</li>
             <li onClick={() => setActivePage('Calendar')}>Calendar</li>
             <li onClick={() => setActivePage('Settings')}>Settings</li>
           </ul>

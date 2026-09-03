@@ -67,6 +67,13 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
 
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
 
+    // Restore user on refresh
+  useEffect(() => {
+    const savedUser = localStorage.getItem('userData');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
   useEffect(() => {
     if (user) {
       setHomeAddress(user.homeAddress || '');
@@ -417,6 +424,7 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
       if (response.ok) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
+                localStorage.setItem('userData', JSON.stringify(data.user));
 setActivePage(localStorage.getItem('currentPage') || (data.user.role === 'ADMIN' || data.user.role === 'MANAGER' ? 'Overview' : 'My Profile'));      } else {
         setMessage(`Error: ${data.message}`);
       }
@@ -457,6 +465,7 @@ setActivePage(localStorage.getItem('currentPage') || (data.user.role === 'ADMIN'
       console.log("Could not reach server for logout");
     }
     localStorage.removeItem('token');
+    localStorage.removeItem('userData');
     setUser(null);
     setMessage(''); setEmail(''); setPassword('');
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);

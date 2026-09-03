@@ -823,7 +823,7 @@ function App() {
               </>
             )}
 
-            {activePage === 'Requests' && (
+                        {activePage === 'Requests' && (
               <>
                 <h1 className="dashboard-header">Off Day Requests</h1>
                 <div className="data-section">
@@ -833,8 +833,28 @@ function App() {
                         <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
                           <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                           <br />Reason: {req.reason}
+                          
+                          {/* ALL USERS (Admin/Manager/Operator) can Cancel if it is PENDING */}
+                          {req.status === 'PENDING' && (
+                            <button 
+                              onClick={() => handleCancelOffDay(req.id)}
+                              style={{ 
+                                backgroundColor: '#e53e3e', 
+                                color: 'white', 
+                                border: 'none', 
+                                padding: '5px 10px', 
+                                borderRadius: '4px', 
+                                cursor: 'pointer',
+                                marginTop: '10px'
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          )}
+
+                          {/* ONLY MANAGER can Approve/Reject */}
                           {isManager && req.status === 'PENDING' && (
-                            <div style={{ marginTop: '10px' }}>
+                            <div style={{ marginTop: '10px', marginLeft: '10px', display: 'inline-block' }}>
                               <button onClick={() => handleApproveReject(req.id, 'APPROVED')} style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Approve</button>
                               <button onClick={() => handleApproveReject(req.id, 'REJECTED')} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px' }}>Reject</button>
                             </div>
@@ -842,6 +862,12 @@ function App() {
                         </li>
                       ))}
                     </ul>
+                  ) : (
+                    <p>No off day requests.</p>
+                  )}
+                </div>
+              </>
+            )}                    </ul>
                   ) : (
                     <p>No off day requests.</p>
                   )}

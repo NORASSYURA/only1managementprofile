@@ -549,7 +549,7 @@ function App() {
       return (
         <div className="dashboard">
           <div className="sidebar">
-            <img src={LOGO_URL} alt="Company Logo" style={{ maxWidth: '120px', margin: '0 auto 20px', display: 'block' }} />
+            <img src={LOGO_URL} alt="Company Logo" style={{ maxWidth: '80px', margin: '0 auto 15px', display: 'block', borderRadius: '8px' }} />
             <div style={{ textAlign: 'center', marginBottom: '20px', color: 'white' }}>
               <p style={{ fontSize: '14px', fontWeight: 'bold' }}>THE ONLY1PROFILEMANAGEMENT</p>
               <p style={{ fontSize: '12px', opacity: 0.8 }}>UEN: 53530731D</p>
@@ -906,7 +906,7 @@ function App() {
     return (
       <div className="dashboard">
         <div className="sidebar">
-          <img src={LOGO_URL} alt="Company Logo" style={{ maxWidth: '120px', margin: '0 auto 20px', display: 'block' }} />
+          <img src={LOGO_URL} alt="Company Logo" style={{ maxWidth: '80px', margin: '0 auto 15px', display: 'block', borderRadius: '8px' }} />
           <div style={{ textAlign: 'center', marginBottom: '20px', color: 'white' }}>
             <p style={{ fontSize: '14px', fontWeight: 'bold' }}>THE ONLY1PROFILEMANAGEMENT</p>
             <p style={{ fontSize: '12px', opacity: 0.8 }}>UEN: 53530731D</p>
@@ -1137,8 +1137,6 @@ function App() {
       </div>
     );
   }
-
- }
 
   return (
     <div className="login-container">

@@ -21,8 +21,7 @@ function App() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
-  const [activePage, setActivePage] = useState('Overview');
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
+const [activePage, setActivePage] = useState(() => localStorage.getItem('currentPage') || 'Overview');  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
@@ -418,8 +417,7 @@ function App() {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
-        setActivePage(data.user.role === 'ADMIN' || data.user.role === 'MANAGER' ? 'Overview' : 'My Profile');
-      } else {
+setActivePage(localStorage.getItem('currentPage') || (data.user.role === 'ADMIN' || data.user.role === 'MANAGER' ? 'Overview' : 'My Profile'));      } else {
         setMessage(`Error: ${data.message}`);
       }
     } catch (error) {
@@ -1071,20 +1069,22 @@ function App() {
                           Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                         </div>
                         {/* Cancel Button for Operator */}
-                        <button 
-                          onClick={() => handleCancelOffDay(req.id)}
-                          style={{ 
-                            backgroundColor: '#e53e3e', 
-                            color: 'white', 
-                            border: 'none', 
-                            padding: '4px 10px', 
-                            borderRadius: '4px', 
-                            cursor: 'pointer',
-                            fontSize: '12px'
-                          }}
-                        >
-                          Cancel
-                        </button>
+                                                {req.status === 'PENDING' && (
+                          <button 
+                            onClick={() => handleCancelOffDay(req.id)}
+                            style={{ 
+                              backgroundColor: '#e53e3e', 
+                              color: 'white', 
+                              border: 'none', 
+                              padding: '4px 10px', 
+                              borderRadius: '4px', 
+                              cursor: 'pointer',
+                              fontSize: '12px'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>

@@ -182,5 +182,16 @@ body {
 }
 
 .logout-btn:hover {
+
+  @keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+
+.blinking {
+  animation: blink 1s infinite;
+  color: #ff4500; /* Red */
+}
   background-color: #c53030;
 }

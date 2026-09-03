@@ -198,11 +198,38 @@ body {
 }
 
 /* Calendar Styles */
-.weekend {
-  background-color: #f9f9f9;
+.calendar-day {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #eee;
+  border-radius: 5px;
+  min-height: 60px;
+  background-color: white;
+  transition: all 0.2s;
 }
 
-.holiday {
-  background-color: #ffeb3b; /* Yellow */
+.calendar-day.holiday {
+  background-color: #ffeb3b; /* Yellow for Holidays */
+  border: 2px solid #fbc02d;
   font-weight: bold;
+}
+
+.calendar-day.approved {
+  background-color: #c8e6c9; /* Green for Approved Off Days */
+  border: 2px solid #28a745;
+}
+
+.calendar-day.pending {
+  background-color: #ffe0b2; /* Orange for Pending Off Days */
+  border: 2px solid #ffc107;
+}
+
+.calendar-day.rejected {
+  background-color: #ffcdd2; /* Red for Rejected Off Days */
+  border: 2px solid #dc3545;
+}
+
+.calendar-day:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }

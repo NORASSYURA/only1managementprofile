@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 function App() {
+  // ... Existing states ...
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -27,15 +28,92 @@ function App() {
   const [forgotMessage, setForgotMessage] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  
-  // Job Posting State
   const [jobs, setJobs] = useState([]);
   const [showJobForm, setShowJobForm] = useState(false);
   const [newJob, setNewJob] = useState({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
+  
+  // Off Day Request State
+  const [offDayRequests, setOffDayRequests] = useState([]);
+  const [myOffDayRequests, setMyOffDayRequests] = useState([]);
+  const [showOffDayForm, setShowOffDayForm] = useState(false);
+  const [newOffDay, setNewOffDay] = useState({ requestedDate: '', reason: '' });
 
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
+
+  // Fetch Off Days
+  const fetchOffDays = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = isAdminOrManager 
+        ? `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`
+        : `https://operator-backend-1jjp.onrender.com/api/offday/operator/${user.id}`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (isAdminOrManager) {
+          setOffDayRequests(data);
+        } else {
+          setMyOffDayRequests(data);
+        }
+      }
+    } catch (error) {
+      console.log("Could not fetch off days");
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchSchedules();
+      fetchJobs();
+      fetchOffDays();
+    }
+  }, [user]);
+
+  const handleCreateOffDay = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/offday/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ ...newOffDay, operatorId: user.id, operatorName: user.name, companyId: user.companyId }),
+      });
+      if (response.ok) {
+        alert("Off day request submitted!");
+        setNewOffDay({ requestedDate: '', reason: '' });
+        setShowOffDayForm(false);
+        fetchOffDays();
+      } else {
+        alert("Failed to submit request.");
+      }
+    } catch (error) {
+      alert("Error submitting request.");
+    }
+  };
+
+  const handleApproveReject = async (id, status) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/offday/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ status }),
+      });
+      if (response.ok) {
+        alert("Request updated!");
+        fetchOffDays();
+      } else {
+        alert("Failed to update request.");
+      }
+    } catch (error) {
+      alert("Error updating request.");
+    }
+  };
+
+  // ... Existing functions (fetchSchedules, handleSaveRate, etc.) ...
 
   const fetchJobs = async () => {
     try {
@@ -49,36 +127,6 @@ function App() {
       }
     } catch (error) {
       console.log("Could not fetch jobs");
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      setHomeAddress(user.homeAddress || '');
-      setPhoneNumber(user.phoneNumber || '');
-      fetchSchedules();
-      fetchJobs();
-    }
-  }, [user]);
-
-  const handleCreateJob = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/jobs/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ...newJob, companyId: user.companyId }),
-      });
-      if (response.ok) {
-        alert("Job posted successfully!");
-        setNewJob({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
-        setShowJobForm(false);
-        fetchJobs();
-      } else {
-        alert("Failed to create job.");
-      }
-    } catch (error) {
-      alert("Error creating job.");
     }
   };
 
@@ -100,93 +148,24 @@ function App() {
     }
   };
 
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault();
+  const handleCreateJob = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${user.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        alert("Profile updated successfully!");
-        setUser(data);
-      } else {
-        alert("Failed to update profile.");
-      }
-    } catch (error) {
-      alert("Error updating profile.");
-    }
-  };
-
-  const handleSaveRate = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${rateUser.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ name: rateUser.name, email: rateUser.email, rate: parseFloat(rateForm.rate) }),
-      });
-
-      if (response.ok) {
-        alert("Rate updated successfully!");
-        setCompanyUsers(companyUsers.map(op => op.id === rateUser.id ? { ...op, rate: parseFloat(rateForm.rate) } : op));
-        setRateUser(null);
-        setRateForm({ rate: '' });
-      } else {
-        alert("Failed to update rate.");
-      }
-    } catch (error) {
-      alert("Error updating rate.");
-    }
-  };
-
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/change-password/${user.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ password: oldPassword, newPassword: newPassword }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setPasswordMessage('Password changed successfully!');
-        setOldPassword('');
-        setNewPassword('');
-      } else {
-        setPasswordMessage(`Error: ${data.message}`);
-      }
-    } catch (error) {
-      setPasswordMessage('Error changing password');
-    }
-  };
-
-  const handleCreateSchedule = async () => {
-    if (!newSchedule.title || !newSchedule.operatorId) {
-      alert("Please fill in title and operator ID");
-      return;
-    }
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/schedule', {
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/jobs/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ...newSchedule, companyId: user.companyId }),
+        body: JSON.stringify({ ...newJob, companyId: user.companyId }),
       });
       if (response.ok) {
-        alert("Schedule created successfully!");
-        setNewSchedule({ title: '', description: '', operatorId: '', status: '' });
-        setShowScheduleForm(false);
-        fetchSchedules();
+        alert("Job posted successfully!");
+        setNewJob({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
+        setShowJobForm(false);
+        fetchJobs();
       } else {
-        alert("Failed to create schedule.");
+        alert("Failed to create job.");
       }
     } catch (error) {
-      alert("Error creating schedule.");
+      alert("Error creating job.");
     }
   };
 
@@ -252,6 +231,8 @@ function App() {
     setForgotEmail('');
     setForgotMessage('');
     setJobs([]);
+    setOffDayRequests([]);
+    setMyOffDayRequests([]);
   };
 
   const handleDelete = async (id) => {
@@ -329,6 +310,13 @@ function App() {
               <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
               <li onClick={() => setActivePage('Schedule')}>Schedule</li>
               <li onClick={() => setActivePage('Jobs')}>Jobs</li>
+              {/* Off Day Requests with Blinking Alert */}
+              <li onClick={() => setActivePage('Requests')}>
+                Off Day Requests
+                {offDayRequests.some(r => r.status === 'PENDING') && (
+                  <span className="blinking"> 🔴</span>
+                )}
+              </li>
               <li onClick={() => setActivePage('Settings')}>Settings</li>
             </ul>
             <div style={{ marginTop: 'auto' }}>
@@ -521,6 +509,32 @@ function App() {
               </>
             )}
 
+            {activePage === 'Requests' && (
+              <>
+                <h1 className="dashboard-header">Off Day Requests</h1>
+                <div className="data-section">
+                  {offDayRequests.length > 0 ? (
+                    <ul className="data-list">
+                      {offDayRequests.map((req) => (
+                        <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                          <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : 'green' }}>{req.status}</strong>
+                          <br />Reason: {req.reason}
+                          {req.status === 'PENDING' && (
+                            <div style={{ marginTop: '10px' }}>
+                              <button onClick={() => handleApproveReject(req.id, 'APPROVED')} style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Approve</button>
+                              <button onClick={() => handleApproveReject(req.id, 'REJECTED')} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px' }}>Reject</button>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No off day requests.</p>
+                  )}
+                </div>
+              </>
+            )}
+
             {activePage === 'Settings' && (
               <>
                 <h1 className="dashboard-header">Settings</h1>
@@ -549,6 +563,7 @@ function App() {
             <li onClick={() => setActivePage('My Profile')}>My Profile</li>
             <li onClick={() => setActivePage('My Schedules')}>My Schedules</li>
             <li onClick={() => setActivePage('Jobs')}>Jobs</li>
+            <li onClick={() => setActivePage('My Off Days')}>My Off Days</li>
             <li onClick={() => setActivePage('Settings')}>Settings</li>
           </ul>
           <div style={{ marginTop: 'auto' }}>
@@ -623,6 +638,33 @@ function App() {
                   </ul>
                 ) : (
                   <p>No jobs available.</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {activePage === 'My Off Days' && (
+            <>
+              <h1 className="dashboard-header">My Off Days</h1>
+              <div className="data-section">
+                <button onClick={() => setShowOffDayForm(!showOffDayForm)} className="action-btn">+ Request Off Day</button>
+                {showOffDayForm && (
+                  <div style={{ marginBottom: '15px' }}>
+                    <input type="date" value={newOffDay.requestedDate} onChange={(e) => setNewOffDay({ ...newOffDay, requestedDate: e.target.value })} className="form-input" />
+                    <input placeholder="Reason" value={newOffDay.reason} onChange={(e) => setNewOffDay({ ...newOffDay, reason: e.target.value })} className="form-input" />
+                    <button onClick={handleCreateOffDay} className="action-btn">Submit Request</button>
+                  </div>
+                )}
+                {myOffDayRequests.length > 0 ? (
+                  <ul className="data-list">
+                    {myOffDayRequests.map((req) => (
+                      <li key={req.id}>
+                        Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No off day requests submitted.</p>
                 )}
               </div>
             </>

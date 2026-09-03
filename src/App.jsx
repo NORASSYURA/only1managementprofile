@@ -45,6 +45,7 @@ function App() {
 
   // Document State
   const [documents, setDocuments] = useState([]);
+    const [viewingDocs, setViewingDocs] = useState(null);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [newDocument, setNewDocument] = useState({ fileName: '', fileType: '' });
   const [fileUrl, setFileUrl] = useState('');

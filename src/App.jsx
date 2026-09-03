@@ -48,13 +48,13 @@ function App() {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [newDocument, setNewDocument] = useState({ fileName: '', fileType: '' });
   const [fileUrl, setFileUrl] = useState('');
-  
-  // New State for Viewing Docs
   const [viewingDocs, setViewingDocs] = useState(null);
 
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
+
+  const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
 
   useEffect(() => {
     if (user) {
@@ -549,7 +549,11 @@ function App() {
       return (
         <div className="dashboard">
           <div className="sidebar">
-            <h2>My Dashboard</h2>
+            <img src={LOGO_URL} alt="Company Logo" style={{ maxWidth: '120px', margin: '0 auto 20px', display: 'block' }} />
+            <div style={{ textAlign: 'center', marginBottom: '20px', color: 'white' }}>
+              <p style={{ fontSize: '14px', fontWeight: 'bold' }}>THE ONLY1PROFILEMANAGEMENT</p>
+              <p style={{ fontSize: '12px', opacity: 0.8 }}>UEN: 53530731D</p>
+            </div>
             <ul>
               <li onClick={() => setActivePage('Overview')}>Overview</li>
               <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
@@ -627,8 +631,6 @@ function App() {
                                 Edit
                               </button>
                               <a href={`tel:${op.phoneNumber}`} style={{ marginLeft: '8px', backgroundColor: '#4CAF50', color: 'white', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '14px' }}>Call</a>
-                              
-                              {/* View Files Button */}
                               <button 
                                 onClick={() => fetchOperatorDocs(op.id)}
                                 style={{ 
@@ -718,8 +720,6 @@ function App() {
                     </button>
                   </div>
                 )}
-
-                {/* View Files Popup */}
                 {viewingDocs && (
                   <div className="data-section" style={{ marginTop: '20px' }}>
                     <h3>Uploaded Files</h3>
@@ -906,7 +906,11 @@ function App() {
     return (
       <div className="dashboard">
         <div className="sidebar">
-          <h2>My Dashboard</h2>
+          <img src={LOGO_URL} alt="Company Logo" style={{ maxWidth: '120px', margin: '0 auto 20px', display: 'block' }} />
+          <div style={{ textAlign: 'center', marginBottom: '20px', color: 'white' }}>
+            <p style={{ fontSize: '14px', fontWeight: 'bold' }}>THE ONLY1PROFILEMANAGEMENT</p>
+            <p style={{ fontSize: '12px', opacity: 0.8 }}>UEN: 53530731D</p>
+          </div>
           <ul>
             <li onClick={() => setActivePage('My Profile')}>My Profile</li>
             <li onClick={() => setActivePage('My Schedules')}>My Schedules</li>
@@ -952,8 +956,6 @@ function App() {
                   <button type="submit" className="action-btn">Update Profile</button>
                 </form>
               </div>
-
-              {/* Upload Documents Section */}
               <div className="data-section" style={{ marginTop: '20px' }}>
                 <h3>Upload Documents</h3>
                 <button onClick={() => setShowUploadForm(!showUploadForm)} className="action-btn">+ Upload File</button>
@@ -1139,7 +1141,9 @@ function App() {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h1 className="login-title">{isRegistering ? 'Create Account' : 'Operator Login'}</h1>
+        <img src={LOGO_URL} alt="Company Logo" style={{ display: 'block', margin: '0 auto 20px', maxWidth: '200px' }} />
+        <h1 className="login-title">THE ONLY1PROFILEMANAGEMENT</h1>
+        <p style={{ textAlign: 'center', marginBottom: '20px', color: '#666' }}>UEN: 53530731D</p>
         <form onSubmit={isRegistering ? handleRegister : handleLogin}>
           {isRegistering && (
             <div className="form-group">

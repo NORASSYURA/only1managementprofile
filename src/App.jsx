@@ -518,7 +518,8 @@ function App() {
                       <ul className="data-list">
                         {companyUsers.map((op) => (
                           <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>{op.name} ({op.email}) - Rate: ${op.rate}</span>
+                           <span>{op.name} ({op.email}) - Rate: ${op.rate} - Phone: {op.phoneNumber}</span>
+
                             <div>
                               <button onClick={() => { setRateUser(op); setRateForm({ rate: op.rate }); }}>Edit Rate</button>
                               {isAdmin && (

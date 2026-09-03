@@ -71,10 +71,17 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
   useEffect(() => {
     const savedUser = localStorage.getItem('userData');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+        // Also set the active page so it doesn't try to render a blank page
+        setActivePage(localStorage.getItem('currentPage') || 'My Profile');
+      } catch (e) {
+        // If the data is corrupted, clear it out and show the login page
+        localStorage.removeItem('userData');
+        setUser(null);
+      }
     }
-  }, []);
-  useEffect(() => {
+  }, []);  useEffect(() => {
     if (user) {
       setHomeAddress(user.homeAddress || '');
       setPhoneNumber(user.phoneNumber || '');
@@ -425,8 +432,7 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
         localStorage.setItem('token', data.token);
         setUser(data.user);
                 localStorage.setItem('userData', JSON.stringify(data.user));
-setActivePage(localStorage.getItem('currentPage') || (data.user.role === 'ADMIN' || data.user.role === 'MANAGER' ? 'Overview' : 'My Profile'));      } else {
-        setMessage(`Error: ${data.message}`);
+setActivePage('My Profile');        setMessage(`Error: ${data.message}`);
       }
     } catch (error) {
       setMessage('Server is not running or CORS error!');

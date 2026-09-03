@@ -831,7 +831,7 @@ function App() {
                         <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
                           <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                           <br />Reason: {req.reason}
-                          {req.status === 'PENDING' && (
+                          {isManager && req.status === 'PENDING' && (
                             <div style={{ marginTop: '10px' }}>
                               <button onClick={() => handleApproveReject(req.id, 'APPROVED')} style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Approve</button>
                               <button onClick={() => handleApproveReject(req.id, 'REJECTED')} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px' }}>Reject</button>
@@ -890,13 +890,22 @@ function App() {
                       const offDayStatus = getOffDayStatus(day);
                       const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                       return (
-                        <div key={day} style={{
-                          padding: '10px',
-                          textAlign: 'center',
-                          border: '1px solid #eee',
-                          borderRadius: '5px',
-                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                        }}>
+                        <div key={day}
+                          onClick={() => {
+                            if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
+                              setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
+                              setTimeout(() => handleCreateOffDay(), 100);
+                            }
+                          }}
+                          style={{
+                            padding: '10px',
+                            textAlign: 'center',
+                            border: '1px solid #eee',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                          }}
+                        >
                           <strong>{day}</strong>
                           {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
                           {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
@@ -1144,13 +1153,22 @@ function App() {
                     const offDayStatus = getOffDayStatus(day);
                     const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     return (
-                      <div key={day} style={{
-                        padding: '10px',
-                        textAlign: 'center',
-                        border: '1px solid #eee',
-                        borderRadius: '5px',
-                        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                      }}>
+                      <div key={day}
+                        onClick={() => {
+                          if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
+                            setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
+                            setTimeout(() => handleCreateOffDay(), 100);
+                          }
+                        }}
+                        style={{
+                          padding: '10px',
+                          textAlign: 'center',
+                          border: '1px solid #eee',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                        }}
+                      >
                         <strong>{day}</strong>
                         {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
                         {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}

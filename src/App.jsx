@@ -387,9 +387,9 @@ function App() {
     }
   };
 
-  const handleEditClick = (operator) => {
+    const handleEditClick = (operator) => {
     setEditingUser(operator);
-    setEditForm({ name: operator.name, email: operator.email });
+    setEditForm({ name: operator.name, email: operator.email, phoneNumber: operator.phoneNumber });
   };
 
   const handleSaveEdit = async () => {
@@ -398,7 +398,7 @@ function App() {
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${editingUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({ name: editForm.name, email: editForm.email, phoneNumber: editForm.phoneNumber }),
       });
       if (response.ok) {
         setCompanyUsers(companyUsers.map(op => op.id === editingUser.id ? { ...op, ...editForm } : op));
@@ -577,6 +577,13 @@ function App() {
                       onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                       style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
                     />
+                            <input 
+          type="text" 
+          placeholder="Phone Number" 
+          value={editForm.phoneNumber} 
+          onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
+          style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
+        />
                     <button 
                       onClick={handleSaveEdit}
                       style={{ 

@@ -35,7 +35,19 @@ function App() {
   const [showOffDayForm, setShowOffDayForm] = useState(false);
   const [newOffDay, setNewOffDay] = useState({ requestedDate: '', reason: '' });
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [publicHolidays, setPublicHolidays] = useState([]);
+  const [publicHolidays, setPublicHolidays] = useState([
+    { date: '2026-01-01', name: 'New Year\'s Day' },
+    { date: '2026-02-17', name: 'Chinese New Year' },
+    { date: '2026-02-18', name: 'Chinese New Year' },
+    { date: '2026-04-03', name: 'Good Friday' },
+    { date: '2026-05-01', name: 'Labour Day' },
+    { date: '2026-05-21', name: 'Vesak Day' },
+    { date: '2026-06-08', name: 'Hari Raya Puasa' },
+    { date: '2026-08-09', name: 'National Day' },
+    { date: '2026-09-17', name: 'Hari Raya Haji' },
+    { date: '2026-10-20', name: 'Deepavali' },
+    { date: '2026-12-25', name: 'Christmas Day' }
+  ]);
 
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
@@ -106,22 +118,7 @@ function App() {
     }
   }, [user]);
 
-  // Fetch Public Holidays
-  useEffect(() => {
-    const fetchHolidays = async () => {
-      try {
-        const year = currentDate.getFullYear();
-        const response = await fetch(`https://date.nager.at/Api/v2/PublicHolidays/${year}/SG`);
-        const data = await response.json();
-        setPublicHolidays(data);
-      } catch (error) {
-        console.log("Could not fetch holidays");
-      }
-    };
-    fetchHolidays();
-  }, [currentDate]);
-
-  const handleCreateJob = async () => {
+   const handleCreateJob = async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/jobs/create', {

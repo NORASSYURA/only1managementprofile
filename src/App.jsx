@@ -21,7 +21,8 @@ function App() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
-const [activePage, setActivePage] = useState(() => localStorage.getItem('currentPage') || 'Overview');  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [activePage, setActivePage] = useState('Overview');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
@@ -46,7 +47,7 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
     { date: '2026-09-17', name: 'Hari Raya Haji' },
     { date: '2026-10-20', name: 'Deepavali' },
     { date: '2026-12-25', name: 'Christmas Day' }
-]);
+  ]);
 
   // Feedback State
   const [allFeedback, setAllFeedback] = useState([]);
@@ -66,32 +67,6 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
   const isAdminOrManager = isAdmin || isManager;
 
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
-
-    // Restore user on refresh
-  useEffect(() => {
-    const savedUser = localStorage.getItem('userData');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-        // Also set the active page so it doesn't try to render a blank page
-        setActivePage(localStorage.getItem('currentPage') || 'My Profile');
-      } catch (e) {
-        // If the data is corrupted, clear it out and show the login page
-        localStorage.removeItem('userData');
-        setUser(null);
-      }
-    }
-  }, []);  useEffect(() => {
-    if (user) {
-      setHomeAddress(user.homeAddress || '');
-      setPhoneNumber(user.phoneNumber || '');
-      fetchSchedules();
-      fetchJobs();
-      fetchFeedback();
-      fetchOffDays();
-      fetchDocuments();
-    }
-  }, [user]);
 
   const fetchSchedules = async () => {
     try {
@@ -290,6 +265,26 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
     }
   };
 
+  const handleCancelOffDay = async (id) => {
+    if (!window.confirm("Are you sure you want to cancel this request?")) return;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/offday/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ status: 'REJECTED' }),
+      });
+      if (response.ok) {
+        alert("Request cancelled!");
+        fetchOffDays();
+      } else {
+        alert("Failed to cancel request.");
+      }
+    } catch (error) {
+      alert("Error cancelling request.");
+    }
+  };
+
   const handleCreateOffDay = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -308,27 +303,6 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
       }
     } catch (error) {
       alert("Error submitting request.");
-    }
-  };
-
-  // Cancel Off Day Function
-  const handleCancelOffDay = async (id) => {
-    if (!window.confirm("Are you sure you want to cancel this request?")) return;
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/offday/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ status: 'REJECTED' }), // Operator cancels by setting to REJECTED
-      });
-      if (response.ok) {
-        alert("Request cancelled!");
-        fetchOffDays();
-      } else {
-        alert("Failed to cancel request.");
-      }
-    } catch (error) {
-      alert("Error cancelling request.");
     }
   };
 
@@ -431,8 +405,8 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
       if (response.ok) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
-                       localStorage.setItem('userData', JSON.stringify(data.user));
-        setActivePage('Overview'); // <-- NEW LINE
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        setActivePage('Overview');
       } else {
         setMessage(`Error: ${data.message}`);
       }
@@ -474,6 +448,7 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
     }
     localStorage.removeItem('token');
     localStorage.removeItem('userData');
+    localStorage.removeItem('currentPage');
     setUser(null);
     setMessage(''); setEmail(''); setPassword('');
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
@@ -489,7 +464,6 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
     setMyFeedback([]);
     setDocuments([]);
     setViewingDocs(null);
-        localStorage.removeItem('currentPage');
   };
 
   const handleDelete = async (id) => {
@@ -594,10 +568,6 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
   };
 
   if (user) {
-      // Redirection Fix: If the page is blank, go to a valid page
-  if (!activePage) {
-    setActivePage(isAdminOrManager ? 'Overview' : 'My Profile');
-  }
     if (isAdminOrManager) {
       return (
         <div className="dashboard">
@@ -918,6 +888,7 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
                       const day = i + 1;
                       const holiday = isPublicHoliday(day);
                       const offDayStatus = getOffDayStatus(day);
+                      const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                       return (
                         <div key={day} style={{
                           padding: '10px',
@@ -1090,8 +1061,7 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
                         <div>
                           Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                         </div>
-                        {/* Cancel Button for Operator */}
-                                                {req.status === 'PENDING' && (
+                        {req.status === 'PENDING' && (
                           <button 
                             onClick={() => handleCancelOffDay(req.id)}
                             style={{ 
@@ -1173,30 +1143,19 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
                     const holiday = isPublicHoliday(day);
                     const offDayStatus = getOffDayStatus(day);
                     const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-                                          return (
-                        <div key={day}
-                          onClick={() => {
-                            // Remove the "!holiday" check so it ALWAYS prompts
-                            if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
-                              setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
-                              setTimeout(() => handleCreateOffDay(), 100);
-                            }
-                          }}
-                          style={{
-                            padding: '10px',
-                            textAlign: 'center',
-                            border: '1px solid #eee',
-                            borderRadius: '5px',
-                            cursor: holiday ? 'default' : 'pointer',
-                            backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                          }}
-                        >
-                          <strong>{day}</strong>
-                          {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                          {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
-                        </div>
-                      );
+                    return (
+                      <div key={day} style={{
+                        padding: '10px',
+                        textAlign: 'center',
+                        border: '1px solid #eee',
+                        borderRadius: '5px',
+                        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                      }}>
+                        <strong>{day}</strong>
+                        {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                        {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
+                      </div>
+                    );
                   })}
                 </div>
               </div>

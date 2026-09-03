@@ -196,3 +196,13 @@ body {
   animation: blink 1s infinite;
   color: #ff4500;
 }
+
+/* Calendar Styles */
+.weekend {
+  background-color: #f9f9f9;
+}
+
+.holiday {
+  background-color: #ffeb3b; /* Yellow */
+  font-weight: bold;
+}

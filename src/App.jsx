@@ -37,7 +37,19 @@ function App() {
 
   // Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [publicHolidays, setPublicHolidays] = useState([]);
+    const [publicHolidays, setPublicHolidays] = useState([
+    { date: '2026-01-01', name: 'New Year's Day' },
+    { date: '2026-02-17', name: 'Chinese New Year' },
+    { date: '2026-02-18', name: 'Chinese New Year' },
+    { date: '2026-04-03', name: 'Good Friday' },
+    { date: '2026-05-01', name: 'Labour Day' },
+    { date: '2026-05-21', name: 'Vesak Day' },
+    { date: '2026-06-08', name: 'Hari Raya Puasa' },
+    { date: '2026-08-09', name: 'National Day' },
+    { date: '2026-09-17', name: 'Hari Raya Haji' },
+    { date: '2026-10-20', name: 'Deepavali' },
+    { date: '2026-12-25', name: 'Christmas Day' }
+  ]);
 
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';

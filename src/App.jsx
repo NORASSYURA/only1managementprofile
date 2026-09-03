@@ -812,4 +812,132 @@ function App() {
                 <button onClick={() => setShowOffDayForm(!showOffDayForm)} className="action-btn">+ Request Off Day</button>
                 {showOffDayForm && (
                   <div style={{ marginBottom: '15px' }}>
-                    <input type="date
+                    <input type="date" value={newOffDay.requestedDate} onChange={(e) => setNewOffDay({ ...newOffDay, requestedDate: e.target.value })} className="form-input" />
+                    <input placeholder="Reason" value={newOffDay.reason} onChange={(e) => setNewOffDay({ ...newOffDay, reason: e.target.value })} className="form-input" />
+                    <button onClick={handleCreateOffDay} className="action-btn">Submit Request</button>
+                  </div>
+                )}
+                {myOffDayRequests.length > 0 ? (
+                  <ul className="data-list">
+                    {myOffDayRequests.map((req) => (
+                      <li key={req.id}>
+                        Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No off day requests submitted.</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {activePage === 'Calendar' && (
+            <>
+              <h1 className="dashboard-header">Singapore Calendar</h1>
+              <div className="data-section">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="action-btn">← Prev</button>
+                  <h2>{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+                  <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="action-btn">Next →</button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '5px' }}>
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                    <div key={day} style={{ textAlign: 'center', fontWeight: 'bold', padding: '10px' }}>{day}</div>
+                  ))}
+                  {Array.from({ length: getFirstDayOfMonth(currentDate) }).map((_, i) => (
+                    <div key={`empty-${i}`}></div>
+                  ))}
+                  {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
+                    const day = i + 1;
+                    const holiday = isPublicHoliday(day);
+                    const offDayStatus = getOffDayStatus(day);
+                    return (
+                      <div key={day} style={{
+                        padding: '10px',
+                        textAlign: 'center',
+                        border: '1px solid #eee',
+                        borderRadius: '5px',
+                        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                      }}>
+                        <strong>{day}</strong>
+                        {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                        {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
+          {activePage === 'Settings' && (
+            <>
+              <h1 className="dashboard-header">Settings</h1>
+              <div className="data-section">
+                <h3>Change Password</h3>
+                <form onSubmit={handleChangePassword}>
+                  <input type="password" placeholder="Current Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className="form-input" />
+                  <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-input" />
+                  <button type="submit" className="action-btn">Change Password</button>
+                </form>
+                {passwordMessage && <p style={{ color: passwordMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px' }}>{passwordMessage}</p>}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="login-container">
+      <div className="login-box">
+        <h1 className="login-title">{isRegistering ? 'Create Account' : 'Operator Login'}</h1>
+        <form onSubmit={isRegistering ? handleRegister : handleLogin}>
+          {isRegistering && (
+            <div className="form-group">
+              <select value={role} onChange={(e) => setRole(e.target.value)} className="form-input">
+                <option value="USER">User</option>
+                <option value="MANAGER">Manager</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+              <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} className="form-input" />
+              <input type="text" placeholder="Home Address" value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} className="form-input" />
+              <input type="text" placeholder="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="form-input" />
+            </div>
+          )}
+          <div className="form-group">
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="form-input" />
+          </div>
+          <div className="form-group">
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-input" />
+          </div>
+          <button type="submit" className="login-btn">{isRegistering ? 'Sign Up' : 'Login'}</button>
+        </form>
+        <div style={{ textAlign: 'center', marginTop: '10px' }}>
+          <button onClick={() => setShowForgotPassword(true)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Forgot Password?</button>
+        </div>
+        {showForgotPassword && (
+          <div style={{ marginTop: '10px' }}>
+            <form onSubmit={handleForgotPassword}>
+              <input type="email" placeholder="Enter your email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} className="form-input" />
+              <button type="submit" className="login-btn" style={{ marginTop: '10px' }}>Reset Password</button>
+            </form>
+            {forgotMessage && <p style={{ color: forgotMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px', textAlign: 'center', fontWeight: 'bold', padding: '10px', borderRadius: '5px', backgroundColor: forgotMessage.includes('Error') ? '#fce4e4' : '#e6fffa' }}>{forgotMessage}</p>}
+          </div>
+        )}
+        <div className="error-msg">{message}</div>
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          {isRegistering ? (
+            <p>Already have an account? <button onClick={() => setIsRegistering(false)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer' }}>Login</button></p>
+          ) : (
+            <p>Don't have an account? <button onClick={() => setIsRegistering(true)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer' }}>Sign Up</button></p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;

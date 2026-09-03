@@ -431,8 +431,10 @@ const [activePage, setActivePage] = useState(() => localStorage.getItem('current
       if (response.ok) {
         localStorage.setItem('token', data.token);
         setUser(data.user);
-                localStorage.setItem('userData', JSON.stringify(data.user));
-setActivePage('My Profile');        setMessage(`Error: ${data.message}`);
+                       localStorage.setItem('userData', JSON.stringify(data.user));
+        setActivePage('Overview'); // <-- NEW LINE
+      } else {
+        setMessage(`Error: ${data.message}`);
       }
     } catch (error) {
       setMessage('Server is not running or CORS error!');
@@ -487,6 +489,7 @@ setActivePage('My Profile');        setMessage(`Error: ${data.message}`);
     setMyFeedback([]);
     setDocuments([]);
     setViewingDocs(null);
+        localStorage.removeItem('currentPage');
   };
 
   const handleDelete = async (id) => {
@@ -591,6 +594,10 @@ setActivePage('My Profile');        setMessage(`Error: ${data.message}`);
   };
 
   if (user) {
+      // Redirection Fix: If the page is blank, go to a valid page
+  if (!activePage) {
+    setActivePage(isAdminOrManager ? 'Overview' : 'My Profile');
+  }
     if (isAdminOrManager) {
       return (
         <div className="dashboard">

@@ -287,6 +287,7 @@ function App() {
       });
       if (response.ok) {
         alert("Off day request submitted!");
+              setNewOffDay({ requestedDate: '', reason: '' });
         setNewOffDay({ requestedDate: '', reason: '' });
         setShowOffDayForm(false);
         fetchOffDays();
@@ -874,24 +875,36 @@ function App() {
                       <div key={`empty-${i}`}></div>
                     ))}
                     {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
-                      const day = i + 1;
-                      const holiday = isPublicHoliday(day);
-                      const offDayStatus = getOffDayStatus(day);
-                      return (
-                        <div key={day} style={{
-                          padding: '10px',
-                          textAlign: 'center',
-                          border: '1px solid #eee',
-                          borderRadius: '5px',
-                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                        }}>
-                          <strong>{day}</strong>
-                          {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                          {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
-                        </div>
-                      );
-                    })}
-                  </div>
+  const day = i + 1;
+  const holiday = isPublicHoliday(day);
+  const offDayStatus = getOffDayStatus(day);
+  const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+  return (
+    <div key={day}
+      onClick={() => {
+        if (!holiday) {
+          if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
+            setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
+            setTimeout(() => handleCreateOffDay(), 100);
+          }
+        }
+      }}
+      style={{
+        padding: '10px',
+        textAlign: 'center',
+        border: '1px solid #eee',
+        borderRadius: '5px',
+        cursor: holiday ? 'default' : 'pointer',
+        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+      }}
+    >
+      <strong>{day}</strong>
+      {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+      {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
+    </div>
+  );
+})}                  </div>
                 </div>
               </>
             )}

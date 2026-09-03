@@ -126,7 +126,7 @@ function App() {
   const fetchOffDays = async () => {
     try {
       const token = localStorage.getItem('token');
-      const url = isAdminOrManager 
+            const url = isAdminOrManager 
         ? `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`
         : `https://operator-backend-1jjp.onrender.com/api/offday/operator/${user.id}`;
       const response = await fetch(url, {
@@ -335,6 +335,7 @@ function App() {
         body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber }),
       });
       const data = await response.json();
+      console.log("Off Days Loaded:", data);
       if (response.ok) {
         alert("Profile updated successfully!");
         setUser(data);
@@ -407,6 +408,7 @@ function App() {
         setUser(data.user);
         localStorage.setItem('userData', JSON.stringify(data.user));
         setActivePage('Overview');
+        fetchOffDays(); // <--- ADD THIS LINE
       } else {
         setMessage(`Error: ${data.message}`);
       }

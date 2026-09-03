@@ -848,8 +848,10 @@ function App() {
                               Cancel
                             </button>
                           )}
+                                                    {/* Manager can Cancel, Approve, or Reject PENDING only */}
                           {isManager && req.status === 'PENDING' && (
                             <div style={{ marginTop: '10px', marginLeft: '10px', display: 'inline-block' }}>
+                              <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Cancel</button>
                               <button onClick={() => handleApproveReject(req.id, 'APPROVED')} style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Approve</button>
                               <button onClick={() => handleApproveReject(req.id, 'REJECTED')} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px' }}>Reject</button>
                             </div>

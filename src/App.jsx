@@ -68,6 +68,30 @@ function App() {
 
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
 
+  // Fetch All Data on User Load
+  useEffect(() => {
+    if (user) {
+      fetchSchedules();
+      fetchJobs();
+      fetchFeedback();
+      fetchOffDays();
+      fetchDocuments();
+    }
+  }, [user]);
+
+  // Restore User on Refresh
+  useEffect(() => {
+    const savedUser = localStorage.getItem('userData');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+        setActivePage('Overview');
+      } catch (e) {
+        localStorage.removeItem('userData');
+      }
+    }
+  }, []);
+
   const fetchSchedules = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -449,7 +473,6 @@ function App() {
     }
     localStorage.removeItem('token');
     localStorage.removeItem('userData');
-    localStorage.removeItem('currentPage');
     setUser(null);
     setMessage(''); setEmail(''); setPassword('');
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
@@ -832,26 +855,15 @@ function App() {
                         <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
                           <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                           <br />Reason: {req.reason}
+                          
+                          {/* Show Cancel button if PENDING */}
                           {req.status === 'PENDING' && (
-                            <button 
-                              onClick={() => handleCancelOffDay(req.id)}
-                              style={{ 
-                                backgroundColor: '#e53e3e', 
-                                color: 'white', 
-                                border: 'none', 
-                                padding: '5px 10px', 
-                                borderRadius: '4px', 
-                                cursor: 'pointer',
-                                marginTop: '10px'
-                              }}
-                            >
-                              Cancel
-                            </button>
+                            <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>Cancel</button>
                           )}
-                                                    {/* Manager can Cancel, Approve, or Reject PENDING only */}
+
+                          {/* ONLY Manager sees Approve/Reject */}
                           {isManager && req.status === 'PENDING' && (
                             <div style={{ marginTop: '10px', marginLeft: '10px', display: 'inline-block' }}>
-                              <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Cancel</button>
                               <button onClick={() => handleApproveReject(req.id, 'APPROVED')} style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Approve</button>
                               <button onClick={() => handleApproveReject(req.id, 'REJECTED')} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px' }}>Reject</button>
                             </div>

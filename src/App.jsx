@@ -35,19 +35,7 @@ function App() {
   const [showOffDayForm, setShowOffDayForm] = useState(false);
   const [newOffDay, setNewOffDay] = useState({ requestedDate: '', reason: '' });
   const [currentDate, setCurrentDate] = useState(new Date());
-    const [publicHolidays, setPublicHolidays] = useState([
-    { date: '2026-01-01', name: 'New Year\'s Day' },
-    { date: '2026-02-17', name: 'Chinese New Year' },
-    { date: '2026-02-18', name: 'Chinese New Year' },
-    { date: '2026-04-03', name: 'Good Friday' },
-    { date: '2026-05-01', name: 'Labour Day' },
-    { date: '2026-05-21', name: 'Vesak Day' },
-    { date: '2026-06-08', name: 'Hari Raya Puasa' },
-    { date: '2026-08-09', name: 'National Day' },
-    { date: '2026-09-17', name: 'Hari Raya Haji' },
-    { date: '2026-10-20', name: 'Deepavali' },
-    { date: '2026-12-25', name: 'Christmas Day' }
-  ]);
+  const [publicHolidays, setPublicHolidays] = useState([]);
 
   // Feedback State
   const [allFeedback, setAllFeedback] = useState([]);
@@ -287,7 +275,6 @@ function App() {
       });
       if (response.ok) {
         alert("Off day request submitted!");
-              setNewOffDay({ requestedDate: '', reason: '' });
         setNewOffDay({ requestedDate: '', reason: '' });
         setShowOffDayForm(false);
         fetchOffDays();
@@ -296,6 +283,27 @@ function App() {
       }
     } catch (error) {
       alert("Error submitting request.");
+    }
+  };
+
+  // Cancel Off Day Function
+  const handleCancelOffDay = async (id) => {
+    if (!window.confirm("Are you sure you want to cancel this request?")) return;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/offday/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ status: 'REJECTED' }), // Operator cancels by setting to REJECTED
+      });
+      if (response.ok) {
+        alert("Request cancelled!");
+        fetchOffDays();
+      } else {
+        alert("Failed to cancel request.");
+      }
+    } catch (error) {
+      alert("Error cancelling request.");
     }
   };
 
@@ -819,7 +827,7 @@ function App() {
                     <ul className="data-list">
                       {offDayRequests.map((req) => (
                         <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                          <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : 'green' }}>{req.status}</strong>
+                          <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                           <br />Reason: {req.reason}
                           {req.status === 'PENDING' && (
                             <div style={{ marginTop: '10px' }}>
@@ -875,36 +883,24 @@ function App() {
                       <div key={`empty-${i}`}></div>
                     ))}
                     {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
-  const day = i + 1;
-  const holiday = isPublicHoliday(day);
-  const offDayStatus = getOffDayStatus(day);
-  const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-  return (
-    <div key={day}
-      onClick={() => {
-        if (!holiday) {
-          if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
-            setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
-            setTimeout(() => handleCreateOffDay(), 100);
-          }
-        }
-      }}
-      style={{
-        padding: '10px',
-        textAlign: 'center',
-        border: '1px solid #eee',
-        borderRadius: '5px',
-        cursor: holiday ? 'default' : 'pointer',
-        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-      }}
-    >
-      <strong>{day}</strong>
-      {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-      {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
-    </div>
-  );
-})}                  </div>
+                      const day = i + 1;
+                      const holiday = isPublicHoliday(day);
+                      const offDayStatus = getOffDayStatus(day);
+                      return (
+                        <div key={day} style={{
+                          padding: '10px',
+                          textAlign: 'center',
+                          border: '1px solid #eee',
+                          borderRadius: '5px',
+                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                        }}>
+                          <strong>{day}</strong>
+                          {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                          {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </>
             )}
@@ -1058,8 +1054,25 @@ function App() {
                 {myOffDayRequests.length > 0 ? (
                   <ul className="data-list">
                     {myOffDayRequests.map((req) => (
-                      <li key={req.id}>
-                        Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
+                      <li key={req.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
+                        </div>
+                        {/* Cancel Button for Operator */}
+                        <button 
+                          onClick={() => handleCancelOffDay(req.id)}
+                          style={{ 
+                            backgroundColor: '#e53e3e', 
+                            color: 'white', 
+                            border: 'none', 
+                            padding: '4px 10px', 
+                            borderRadius: '4px', 
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }}
+                        >
+                          Cancel
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -1122,37 +1135,36 @@ function App() {
                     <div key={`empty-${i}`}></div>
                   ))}
                   {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
-  const day = i + 1;
-  const holiday = isPublicHoliday(day);
-  const offDayStatus = getOffDayStatus(day);
-  const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const day = i + 1;
+                    const holiday = isPublicHoliday(day);
+                    const offDayStatus = getOffDayStatus(day);
+                    const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-  return (
-    <div key={day}
-      onClick={() => {
-        if (!holiday) {
-          if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
-            setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
-            // We need to wait for the state to update before calling create. Use setTimeout or a new variable.
-            setTimeout(() => handleCreateOffDay(), 100);
-          }
-        }
-      }}
-      style={{
-        padding: '10px',
-        textAlign: 'center',
-        border: '1px solid #eee',
-        borderRadius: '5px',
-        cursor: holiday ? 'default' : 'pointer', // Clickable, except on public holidays
-        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-      }}
-    >
-      <strong>{day}</strong>
-      {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-      {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
-    </div>
-  );
-})}
+                    return (
+                      <div key={day}
+                        onClick={() => {
+                          if (!holiday) {
+                            if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
+                              setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
+                              setTimeout(() => handleCreateOffDay(), 100);
+                            }
+                          }
+                        }}
+                        style={{
+                          padding: '10px',
+                          textAlign: 'center',
+                          border: '1px solid #eee',
+                          borderRadius: '5px',
+                          cursor: holiday ? 'default' : 'pointer',
+                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                        }}
+                      >
+                        <strong>{day}</strong>
+                        {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                        {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </>

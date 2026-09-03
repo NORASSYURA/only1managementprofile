@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 
 function App() {
-  // ... Existing states ...
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -31,18 +30,67 @@ function App() {
   const [jobs, setJobs] = useState([]);
   const [showJobForm, setShowJobForm] = useState(false);
   const [newJob, setNewJob] = useState({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
-  
-  // Off Day Request State
   const [offDayRequests, setOffDayRequests] = useState([]);
   const [myOffDayRequests, setMyOffDayRequests] = useState([]);
   const [showOffDayForm, setShowOffDayForm] = useState(false);
   const [newOffDay, setNewOffDay] = useState({ requestedDate: '', reason: '' });
 
+  // Calendar State
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [publicHolidays, setPublicHolidays] = useState([]);
+
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
 
-  // Fetch Off Days
+  // Fetch Singapore Public Holidays
+  useEffect(() => {
+    const fetchHolidays = async () => {
+      try {
+        const year = currentDate.getFullYear();
+        const response = await fetch(`https://date.nager.at/Api/v2/PublicHolidays/${year}/SG`);
+        const data = await response.json();
+        setPublicHolidays(data);
+      } catch (error) {
+        console.log("Could not fetch holidays");
+      }
+    };
+    fetchHolidays();
+  }, [currentDate]);
+
+  const fetchSchedules = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = isAdminOrManager 
+        ? `https://operator-backend-1jjp.onrender.com/api/schedule/company/${user.companyId}`
+        : `https://operator-backend-1jjp.onrender.com/api/schedule/operator/${user.id}`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSchedules(data);
+      }
+    } catch (error) {
+      console.log("Could not fetch schedules");
+    }
+  };
+
+  const fetchJobs = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/jobs/company/${user.companyId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setJobs(data);
+      }
+    } catch (error) {
+      console.log("Could not fetch jobs");
+    }
+  };
+
   const fetchOffDays = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -67,11 +115,34 @@ function App() {
 
   useEffect(() => {
     if (user) {
+      setHomeAddress(user.homeAddress || '');
+      setPhoneNumber(user.phoneNumber || '');
       fetchSchedules();
       fetchJobs();
       fetchOffDays();
     }
   }, [user]);
+
+  const handleCreateJob = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/jobs/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ ...newJob, companyId: user.companyId }),
+      });
+      if (response.ok) {
+        alert("Job posted successfully!");
+        setNewJob({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
+        setShowJobForm(false);
+        fetchJobs();
+      } else {
+        alert("Failed to create job.");
+      }
+    } catch (error) {
+      alert("Error creating job.");
+    }
+  };
 
   const handleCreateOffDay = async () => {
     try {
@@ -113,59 +184,71 @@ function App() {
     }
   };
 
-  // ... Existing functions (fetchSchedules, handleSaveRate, etc.) ...
-
-  const fetchJobs = async () => {
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/jobs/company/${user.companyId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber }),
       });
+      const data = await response.json();
       if (response.ok) {
-        const data = await response.json();
-        setJobs(data);
+        alert("Profile updated successfully!");
+        setUser(data);
+      } else {
+        alert("Failed to update profile.");
       }
     } catch (error) {
-      console.log("Could not fetch jobs");
+      alert("Error updating profile.");
     }
   };
 
-  const fetchSchedules = async () => {
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const url = isAdminOrManager 
-        ? `https://operator-backend-1jjp.onrender.com/api/schedule/company/${user.companyId}`
-        : `https://operator-backend-1jjp.onrender.com/api/schedule/operator/${user.id}`;
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` },
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/change-password/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ password: oldPassword, newPassword: newPassword }),
       });
+      const data = await response.json();
       if (response.ok) {
-        const data = await response.json();
-        setSchedules(data);
+        setPasswordMessage('Password changed successfully!');
+        setOldPassword('');
+        setNewPassword('');
+      } else {
+        setPasswordMessage(`Error: ${data.message}`);
       }
     } catch (error) {
-      console.log("Could not fetch schedules");
+      setPasswordMessage('Error changing password');
     }
   };
 
-  const handleCreateJob = async () => {
+  const handleCreateSchedule = async () => {
+    if (!newSchedule.title || !newSchedule.operatorId) {
+      alert("Please fill in title and operator ID");
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/jobs/create', {
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ...newJob, companyId: user.companyId }),
+        body: JSON.stringify({ ...newSchedule, companyId: user.companyId }),
       });
       if (response.ok) {
-        alert("Job posted successfully!");
-        setNewJob({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
-        setShowJobForm(false);
-        fetchJobs();
+        alert("Schedule created successfully!");
+        setNewSchedule({ title: '', description: '', operatorId: '', status: '' });
+        setShowScheduleForm(false);
+        fetchSchedules();
       } else {
-        alert("Failed to create job.");
+        alert("Failed to create schedule.");
       }
     } catch (error) {
-      alert("Error creating job.");
+      alert("Error creating schedule.");
     }
   };
 
@@ -243,7 +326,6 @@ function App() {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
-
       if (response.ok) {
         setCompanyUsers(companyUsers.filter(op => op.id !== id));
         setActiveUsers(activeUsers.filter(op => op.id !== id));
@@ -268,7 +350,6 @@ function App() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(editForm),
       });
-
       if (response.ok) {
         setCompanyUsers(companyUsers.map(op => op.id === editingUser.id ? { ...op, ...editForm } : op));
         setActiveUsers(activeUsers.map(op => op.id === editingUser.id ? { ...op, ...editForm } : op));
@@ -279,6 +360,27 @@ function App() {
       }
     } catch (error) {
       alert("Error updating user.");
+    }
+  };
+
+  const handleSaveRate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${rateUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ name: rateUser.name, email: rateUser.email, rate: parseFloat(rateForm.rate) }),
+      });
+      if (response.ok) {
+        alert("Rate updated successfully!");
+        setCompanyUsers(companyUsers.map(op => op.id === rateUser.id ? { ...op, rate: parseFloat(rateForm.rate) } : op));
+        setRateUser(null);
+        setRateForm({ rate: '' });
+      } else {
+        alert("Failed to update rate.");
+      }
+    } catch (error) {
+      alert("Error updating rate.");
     }
   };
 
@@ -298,6 +400,26 @@ function App() {
     }
   };
 
+  // Calendar Helper Functions
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const isPublicHoliday = (day) => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return publicHolidays.find(h => h.date === dateStr);
+  };
+
+  const getOffDayStatus = (day) => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const request = myOffDayRequests.find(r => r.requestedDate === dateStr);
+    return request ? request.status : null;
+  };
+
   if (user) {
     // ADMIN OR MANAGER DASHBOARD
     if (isAdminOrManager) {
@@ -310,13 +432,13 @@ function App() {
               <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
               <li onClick={() => setActivePage('Schedule')}>Schedule</li>
               <li onClick={() => setActivePage('Jobs')}>Jobs</li>
-              {/* Off Day Requests with Blinking Alert */}
               <li onClick={() => setActivePage('Requests')}>
                 Off Day Requests
                 {offDayRequests.some(r => r.status === 'PENDING') && (
                   <span className="blinking"> 🔴</span>
                 )}
               </li>
+              <li onClick={() => setActivePage('Calendar')}>Calendar</li>
               <li onClick={() => setActivePage('Settings')}>Settings</li>
             </ul>
             <div style={{ marginTop: 'auto' }}>
@@ -535,6 +657,45 @@ function App() {
               </>
             )}
 
+            {activePage === 'Calendar' && (
+              <>
+                <h1 className="dashboard-header">Singapore Calendar</h1>
+                <div className="data-section">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="action-btn">← Prev</button>
+                    <h2>{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+                    <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="action-btn">Next →</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '5px' }}>
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                      <div key={day} style={{ textAlign: 'center', fontWeight: 'bold', padding: '10px' }}>{day}</div>
+                    ))}
+                    {Array.from({ length: getFirstDayOfMonth(currentDate) }).map((_, i) => (
+                      <div key={`empty-${i}`}></div>
+                    ))}
+                    {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
+                      const day = i + 1;
+                      const holiday = isPublicHoliday(day);
+                      const offDayStatus = getOffDayStatus(day);
+                      return (
+                        <div key={day} style={{
+                          padding: '10px',
+                          textAlign: 'center',
+                          border: '1px solid #eee',
+                          borderRadius: '5px',
+                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                        }}>
+                          <strong>{day}</strong>
+                          {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                          {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+
             {activePage === 'Settings' && (
               <>
                 <h1 className="dashboard-header">Settings</h1>
@@ -564,6 +725,7 @@ function App() {
             <li onClick={() => setActivePage('My Schedules')}>My Schedules</li>
             <li onClick={() => setActivePage('Jobs')}>Jobs</li>
             <li onClick={() => setActivePage('My Off Days')}>My Off Days</li>
+            <li onClick={() => setActivePage('Calendar')}>Calendar</li>
             <li onClick={() => setActivePage('Settings')}>Settings</li>
           </ul>
           <div style={{ marginTop: 'auto' }}>
@@ -650,93 +812,4 @@ function App() {
                 <button onClick={() => setShowOffDayForm(!showOffDayForm)} className="action-btn">+ Request Off Day</button>
                 {showOffDayForm && (
                   <div style={{ marginBottom: '15px' }}>
-                    <input type="date" value={newOffDay.requestedDate} onChange={(e) => setNewOffDay({ ...newOffDay, requestedDate: e.target.value })} className="form-input" />
-                    <input placeholder="Reason" value={newOffDay.reason} onChange={(e) => setNewOffDay({ ...newOffDay, reason: e.target.value })} className="form-input" />
-                    <button onClick={handleCreateOffDay} className="action-btn">Submit Request</button>
-                  </div>
-                )}
-                {myOffDayRequests.length > 0 ? (
-                  <ul className="data-list">
-                    {myOffDayRequests.map((req) => (
-                      <li key={req.id}>
-                        Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No off day requests submitted.</p>
-                )}
-              </div>
-            </>
-          )}
-
-          {activePage === 'Settings' && (
-            <>
-              <h1 className="dashboard-header">Settings</h1>
-              <div className="data-section">
-                <h3>Change Password</h3>
-                <form onSubmit={handleChangePassword}>
-                  <input type="password" placeholder="Current Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className="form-input" />
-                  <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-input" />
-                  <button type="submit" className="action-btn">Change Password</button>
-                </form>
-                {passwordMessage && <p style={{ color: passwordMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px' }}>{passwordMessage}</p>}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="login-container">
-      <div className="login-box">
-        <h1 className="login-title">{isRegistering ? 'Create Account' : 'Operator Login'}</h1>
-        <form onSubmit={isRegistering ? handleRegister : handleLogin}>
-          {isRegistering && (
-            <div className="form-group">
-              <select value={role} onChange={(e) => setRole(e.target.value)} className="form-input">
-                <option value="USER">User</option>
-                <option value="MANAGER">Manager</option>
-                <option value="ADMIN">Admin</option>
-              </select>
-              <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} className="form-input" />
-              <input type="text" placeholder="Home Address" value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} className="form-input" />
-              <input type="text" placeholder="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="form-input" />
-            </div>
-          )}
-          <div className="form-group">
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="form-input" />
-          </div>
-          <div className="form-group">
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="form-input" />
-          </div>
-          <button type="submit" className="login-btn">{isRegistering ? 'Sign Up' : 'Login'}</button>
-        </form>
-        <div style={{ textAlign: 'center', marginTop: '10px' }}>
-          <button onClick={() => setShowForgotPassword(true)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Forgot Password?</button>
-        </div>
-        {showForgotPassword && (
-          <div style={{ marginTop: '10px' }}>
-            <form onSubmit={handleForgotPassword}>
-              <input type="email" placeholder="Enter your email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} className="form-input" />
-              <button type="submit" className="login-btn" style={{ marginTop: '10px' }}>Reset Password</button>
-            </form>
-            {forgotMessage && <p style={{ color: forgotMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px', textAlign: 'center', fontWeight: 'bold', padding: '10px', borderRadius: '5px', backgroundColor: forgotMessage.includes('Error') ? '#fce4e4' : '#e6fffa' }}>{forgotMessage}</p>}
-          </div>
-        )}
-        <div className="error-msg">{message}</div>
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-          {isRegistering ? (
-            <p>Already have an account? <button onClick={() => setIsRegistering(false)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer' }}>Login</button></p>
-          ) : (
-            <p>Don't have an account? <button onClick={() => setIsRegistering(true)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer' }}>Sign Up</button></p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default App;
+                    <input type="date

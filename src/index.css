@@ -7,8 +7,8 @@
 }
 
 body {
-  background-color: #f4f6f9;
-  color: #333;
+  background-color: #121212; /* Dark background */
+  color: #fff;
 }
 
 /* Login Page Styles */
@@ -17,23 +17,28 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-image: url('https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png');
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(0, 0, 0, 0.6); /* Dark overlay */
+  background-blend-mode: multiply;
 }
 
 .login-box {
-  background: white;
+  background: rgba(255, 255, 255, 0.95); /* Slightly transparent white */
   padding: 40px;
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   width: 100%;
   max-width: 400px;
 }
 
 .login-title {
   color: #333;
-  margin-bottom: 30px;
+  margin-bottom: 5px;
   text-align: center;
-  font-size: 28px;
+  font-size: 20px;
+  font-weight: 800;
 }
 
 .form-group {
@@ -43,31 +48,28 @@ body {
 .form-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 16px;
-  transition: border-color 0.3s;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #667eea;
+  background-color: #fff;
+  color: #333;
 }
 
 .login-btn {
   width: 100%;
   padding: 12px;
-  background-color: #667eea;
-  color: white;
+  background-color: #FFD700; /* Gold color to match your logo! */
+  color: #000;
   border: none;
   border-radius: 6px;
   font-size: 16px;
+  font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .login-btn:hover {
-  background-color: #5a67d8;
+  background-color: #e6c200;
 }
 
 .error-msg {
@@ -85,7 +87,7 @@ body {
 
 .sidebar {
   width: 250px;
-  background-color: #1a202c;
+  background-color: #121212;
   color: white;
   padding: 20px;
   display: flex;
@@ -110,13 +112,14 @@ body {
 }
 
 .sidebar li:hover {
-  background-color: #2d3748;
+  background-color: #333;
 }
 
 .main-content {
   flex: 1;
   padding: 30px;
   background-color: #f4f6f9;
+  color: #333;
 }
 
 .dashboard-header {
@@ -130,7 +133,7 @@ body {
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   margin-bottom: 30px;
-  border-left: 5px solid #667eea;
+  border-left: 5px solid #FFD700;
 }
 
 .data-section {
@@ -157,18 +160,18 @@ body {
 }
 
 .action-btn {
-  background-color: #48bb78;
-  color: white;
+  background-color: #FFD700;
+  color: #000;
   border: none;
   padding: 10px 20px;
   border-radius: 6px;
   cursor: pointer;
   margin-bottom: 20px;
-  transition: background 0.2s;
+  font-weight: bold;
 }
 
 .action-btn:hover {
-  background-color: #38a169;
+  background-color: #e6c200;
 }
 
 .logout-btn {
@@ -178,7 +181,6 @@ body {
   padding: 10px 20px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s;
 }
 
 .logout-btn:hover {

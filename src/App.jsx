@@ -36,8 +36,9 @@ function App() {
   const [newOffDay, setNewOffDay] = useState({ requestedDate: '', reason: '' });
   
   // Hardcoded Singapore Public Holidays for 2026
-  const [publicHolidays, setPublicHolidays] = useState([
-    { date: '2026-01-01', name: 'New Year's Day' },
+  // Public Holidays (Fetched from API)
+  const [publicHolidays, setPublicHolidays] = useState([]);
+  { date: '2026-01-01', name: 'New Year's Day' },
     { date: '2026-02-17', name: 'Chinese New Year' },
     { date: '2026-02-18', name: 'Chinese New Year' },
     { date: '2026-04-03', name: 'Good Friday' },
@@ -141,6 +142,21 @@ function App() {
       fetchOffDays();
     }
   }, [user]);
+
+     // Fetch Public Holidays from API whenever the month changes
+  useEffect(() => {
+    const fetchHolidays = async () => {
+      try {
+        const year = currentDate.getFullYear();
+        const response = await fetch(`https://date.nager.at/Api/v2/PublicHolidays/${year}/SG`);
+        const data = await response.json();
+        setPublicHolidays(data);
+      } catch (error) {
+        console.log("Could not fetch holidays");
+      }
+    };
+    fetchHolidays();
+  }, [currentDate]);
 
   const handleCreateJob = async () => {
     try {

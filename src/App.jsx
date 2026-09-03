@@ -503,6 +503,23 @@ function App() {
     } catch (error) {
       console.log("Could not fetch company users");
     }
+
+      const fetchOperatorDocs = async (operatorId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/documents/operator/${operatorId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setViewingDocs(data);
+      } else {
+        setViewingDocs([]);
+      }
+    } catch (error) {
+      console.log("Could not fetch documents");
+    }
+  };
   };
 
   const getDaysInMonth = (date) => {
@@ -607,6 +624,21 @@ function App() {
                                 Edit
                               </button>
                               <a href={`tel:${op.phoneNumber}`} style={{ marginLeft: '8px', backgroundColor: '#4CAF50', color: 'white', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '14px' }}>Call</a>
+                                          <button 
+                onClick={() => fetchOperatorDocs(op.id)}
+                style={{ 
+                  marginLeft: '8px', 
+                  backgroundColor: '#f59e0b', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '4px 10px', 
+                  borderRadius: '4px', 
+                  cursor: 'pointer', 
+                  fontSize: '14px' 
+                }}
+              >
+                View Files
+              </button>
                             </div>
                           </li>
                         ))}
@@ -1126,6 +1158,23 @@ function App() {
           )}
         </div>
       </div>
+            {viewingDocs && (
+          <div className="data-section" style={{ marginTop: '20px' }}>
+            <h3>Uploaded Files</h3>
+            <button onClick={() => setViewingDocs(null)} className="action-btn" style={{ backgroundColor: '#e53e3e' }}>Close</button>
+            <ul className="data-list">
+              {viewingDocs.length > 0 ? (
+                viewingDocs.map((doc) => (
+                  <li key={doc.id}>
+                    <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">{doc.fileName}</a>
+                  </li>
+                ))
+              ) : (
+                <p>No documents uploaded for this operator.</p>
+              )}
+            </ul>
+          </div>
+        )}
     </div>
   );
 }

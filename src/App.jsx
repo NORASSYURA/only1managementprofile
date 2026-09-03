@@ -52,10 +52,20 @@ function App() {
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
-
+useEffect(() => {
+    if (user) {
+      setHomeAddress(user.homeAddress || '');
+      setPhoneNumber(user.phoneNumber || '');
+      fetchSchedules();
+      fetchJobs();
+      fetchFeedback();
+      fetchOffDays();
+      fetchDocuments(); // <--- Add this
+    }
+  }, [user]);
   // Cloudinary Configuration
-  const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/auto/upload';
-  const UPLOAD_PRESET = 'YOUR_UNSIGNED_PRESET';
+ const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/uywj26ei/auto/upload';
+  const UPLOAD_PRESET = 'my_preset';
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];

@@ -949,6 +949,7 @@ function App() {
             <li onClick={() => setActivePage('My Profile')}>My Profile</li>
             <li onClick={() => setActivePage('Jobs')}>Jobs</li>
             <li onClick={() => { setActivePage('My Off Days'); fetchOffDays(); }}>My Off Days</li>
+            <li onClick={() => setActivePage('Relieve')}>Relieve</li>
             <li onClick={() => setActivePage('Feedback')}>Feedback</li>
             <li onClick={() => setActivePage('Calendar')}>Calendar</li>
             <li onClick={() => setActivePage('Settings')}>Settings</li>
@@ -1082,6 +1083,39 @@ function App() {
                     <button onClick={handleCreateOffDay} className="action-btn">Submit Request</button>
                   </div>
                 )}
+                          {activePage === 'Relieve' && (
+            <>
+              <h1 className="dashboard-header">Relieve Duty</h1>
+              <div className="data-section">
+                <input type="date" value={newRelieve.date} onChange={(e) => setNewRelieve({ ...newRelieve, date: e.target.value })} className="form-input" />
+                <select value={newRelieve.jobPosition} onChange={(e) => setNewRelieve({ ...newRelieve, jobPosition: e.target.value })} className="form-input">
+                  <option value="">Select Shift</option>
+                  <option value="P103 Nightshift">P103 Nightshift</option>
+                  <option value="Cc09b Dayshift">Cc09b Dayshift</option>
+                  <option value="Changi T5 Dayshift">Changi T5 Dayshift</option>
+                  <option value="Changi T5 Nightshift">Changi T5 Nightshift</option>
+                  <option value="C12A/C12B">C12A/C12B</option>
+                  <option value="Woodland ICA Dayshift">Woodland ICA Dayshift</option>
+                  <option value="Xcmg - S.E Crane">Xcmg - S.E Crane</option>
+                  <option value="HIROSE">HIROSE</option>
+                  <option value="CR 106 Nightshift (Adhoc)">CR 106 Nightshift (Adhoc)</option>
+                </select>
+                <button onClick={handleCreateRelieve} className="action-btn">Submit Relieve</button>
+              </div>
+              <div className="data-section">
+                <h3>My Relieve Duties</h3>
+                {relieveRequests.filter(r => r.relieverId === user.id).length > 0 ? (
+                  <ul className="data-list">
+                    {relieveRequests.filter(r => r.relieverId === user.id).map((req) => (
+                      <li key={req.id}>{req.jobPosition} - {req.date}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No relieve duties assigned.</p>
+                )}
+              </div>
+            </>
+          )}
                 {myOffDayRequests.length > 0 ? (
                   <ul className="data-list">
                     {myOffDayRequests.map((req) => (

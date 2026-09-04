@@ -324,6 +324,24 @@ function App() {
     } catch (error) {
       alert("Error submitting request.");
     }
+      const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/operators/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setForgotMessage(`Password reset successful! Please use this temporary password: ${data.message.split(': ')[1]} to log in, then change it in Settings.`);
+      } else {
+        setForgotMessage(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      setForgotMessage('Server is not running or CORS error!');
+    }
+  };
   };
 
   const handleApproveReject = async (id, status) => {
@@ -1265,6 +1283,18 @@ function App() {
           </div>
         )}
         <div className="error-msg">{message}</div>
+                <div style={{ textAlign: 'center', marginTop: '10px' }}>
+          <button onClick={() => setShowForgotPassword(true)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Forgot Password?</button>
+        </div>
+        {showForgotPassword && (
+          <div style={{ marginTop: '10px' }}>
+            <form onSubmit={handleForgotPassword}>
+              <input type="email" placeholder="Enter your email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} className="form-input" />
+              <button type="submit" className="login-btn" style={{ marginTop: '10px' }}>Reset Password</button>
+            </form>
+            {forgotMessage && <p style={{ color: forgotMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px', textAlign: 'center', fontWeight: 'bold', padding: '10px', borderRadius: '5px', backgroundColor: forgotMessage.includes('Error') ? '#fce4e4' : '#e6fffa' }}>{forgotMessage}</p>}
+          </div>
+        )}
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
           {isRegistering ? (
             <p>Already have an account? <button onClick={() => setIsRegistering(false)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer' }}>Login</button></p>

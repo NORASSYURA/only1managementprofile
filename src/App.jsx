@@ -27,6 +27,7 @@ function App() {
   const [forgotMessage, setForgotMessage] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [nric, setNric] = useState('');
   const [jobs, setJobs] = useState([]);
   const [showJobForm, setShowJobForm] = useState(false);
   const [newJob, setNewJob] = useState({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
@@ -67,6 +68,32 @@ function App() {
   const isAdminOrManager = isAdmin || isManager;
 
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
+
+  // Fetch All Data on User Load
+  useEffect(() => {
+    if (user) {
+      setHomeAddress(user.homeAddress || '');
+      setPhoneNumber(user.phoneNumber || '');
+      setNric(user.nric || '');
+      fetchSchedules();
+      fetchJobs();
+      fetchFeedback();
+      fetchOffDays();
+      fetchDocuments();
+    }
+  }, [user]);
+
+  // Restore User on Refresh
+  useEffect(() => {
+    const savedUser = localStorage.getItem('userData');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('userData');
+      }
+    }
+  }, []);
 
   const fetchSchedules = async () => {
     try {
@@ -332,7 +359,8 @@ function App() {
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber, nric }),      });
+        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber, nric }),
+      });
       const data = await response.json();
       if (response.ok) {
         alert("Profile updated successfully!");
@@ -405,7 +433,7 @@ function App() {
         localStorage.setItem('token', data.token);
         setUser(data.user);
         localStorage.setItem('userData', JSON.stringify(data.user));
-        setActivePage('Overview'); // ALL USERS LAND ON OVERVIEW
+        setActivePage('Overview');
         fetchOffDays();
       } else {
         setMessage(`Error: ${data.message}`);
@@ -566,29 +594,6 @@ function App() {
     return request ? request.status : null;
   };
 
-  // Restore User on Refresh
-  useEffect(() => {
-    const savedUser = localStorage.getItem('userData');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-        setActivePage('Overview');
-      } catch (e) {
-        localStorage.removeItem('userData');
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      fetchSchedules();
-      fetchJobs();
-      fetchFeedback();
-      fetchOffDays();
-      fetchDocuments();
-    }
-  }, [user]);
-
   if (user) {
     if (isAdminOrManager) {
       return (
@@ -642,7 +647,8 @@ function App() {
                       <ul className="data-list">
                         {companyUsers.map((op) => (
                           <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-<span>{op.name} ({op.email}) - Rate: ${op.rate} - Phone: {op.phoneNumber} - NRIC: {op.nric} - Address: {op.homeAddress}</span>                            <div>
+                            <span>{op.name} ({op.email}) - Rate: ${op.rate} - Phone: {op.phoneNumber} - NRIC: {op.nric} - Address: {op.homeAddress}</span>
+                            <div>
                               <button onClick={() => { setRateUser(op); setRateForm({ rate: op.rate }); }}>Edit Rate</button>
                               {isAdmin && (
                                 <button 
@@ -1026,13 +1032,13 @@ function App() {
                     onChange={(e) => setPhoneNumber(e.target.value)} 
                     className="form-input" 
                   />
-                          <input 
-          type="text" 
-          placeholder="NRIC" 
-          value={nric} 
-          onChange={(e) => setNric(e.target.value)} 
-          className="form-input" 
-        />
+                  <input 
+                    type="text" 
+                    placeholder="NRIC" 
+                    value={nric} 
+                    onChange={(e) => setNric(e.target.value)} 
+                    className="form-input" 
+                  />
                   <button type="submit" className="action-btn">Update Profile</button>
                 </form>
               </div>

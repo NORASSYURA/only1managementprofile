@@ -28,6 +28,7 @@ function App() {
   const [homeAddress, setHomeAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [nric, setNric] = useState('');
+  const [jobPosition, setJobPosition] = useState(''); // NEW: Job Position
   const [jobs, setJobs] = useState([]);
   const [showJobForm, setShowJobForm] = useState(false);
   const [newJob, setNewJob] = useState({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
@@ -68,32 +69,6 @@ function App() {
   const isAdminOrManager = isAdmin || isManager;
 
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
-
-  // Fetch All Data on User Load
-  useEffect(() => {
-    if (user) {
-      setHomeAddress(user.homeAddress || '');
-      setPhoneNumber(user.phoneNumber || '');
-      setNric(user.nric || '');
-      fetchSchedules();
-      fetchJobs();
-      fetchFeedback();
-      fetchOffDays();
-      fetchDocuments();
-    }
-  }, [user]);
-
-  // Restore User on Refresh
-  useEffect(() => {
-    const savedUser = localStorage.getItem('userData');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        localStorage.removeItem('userData');
-      }
-    }
-  }, []);
 
   const fetchSchedules = async () => {
     try {
@@ -359,7 +334,7 @@ function App() {
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber, nric }),
+        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber, nric, jobPosition }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -646,9 +621,8 @@ function App() {
                       <ul className="data-list">
                         {companyUsers.map((op) => (
                           <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>{op.name} ({op.email}) - Rate: ${op.rate} - Phone: {op.phoneNumber} - NRIC: {op.nric} - Address: {op.homeAddress}</span>
+                            <span>{op.name} ({op.email})</span>
                             <div>
-                              <button onClick={() => { setRateUser(op); setRateForm({ rate: op.rate }); }}>Edit Rate</button>
                               {isAdmin && (
                                 <button 
                                   onClick={() => handleDelete(op.id)}
@@ -789,17 +763,7 @@ function App() {
               </>
             )}
 
-                  {schedules.length > 0 ? (
-                    <ul className="data-list">
-                      {schedules.map((sch) => (
-                        <li key={sch.id}>{sch.title} (Operator {sch.operator?.id})</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>No schedules yet.</p>
-                  )}
-                </div>
-                  {activePage === 'Jobs' && (
+            {activePage === 'Jobs' && (
               <>
                 <h1 className="dashboard-header">Job Board</h1>
                 <div className="data-section">
@@ -841,11 +805,9 @@ function App() {
                         <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
                           <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                           <br />Reason: {req.reason}
-                          
                           {req.status === 'PENDING' && (
                             <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>Cancel</button>
                           )}
-
                           {isManager && req.status === 'PENDING' && (
                             <div style={{ marginTop: '10px', marginLeft: '10px', display: 'inline-block' }}>
                               <button onClick={() => handleApproveReject(req.id, 'APPROVED')} style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', marginRight: '10px' }}>Approve</button>
@@ -905,22 +867,13 @@ function App() {
                       const offDayStatus = getOffDayStatus(day);
                       const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                       return (
-                        <div key={day}
-                          onClick={() => {
-                            if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
-                              setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
-                              setTimeout(() => handleCreateOffDay(), 100);
-                            }
-                          }}
-                          style={{
-                            padding: '10px',
-                            textAlign: 'center',
-                            border: '1px solid #eee',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                            backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                          }}
-                        >
+                        <div key={day} style={{
+                          padding: '10px',
+                          textAlign: 'center',
+                          border: '1px solid #eee',
+                          borderRadius: '5px',
+                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                        }}>
                           <strong>{day}</strong>
                           {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
                           {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
@@ -982,7 +935,6 @@ function App() {
                 <p><strong>Email:</strong> {user.email}</p>
                 <p><strong>Company ID:</strong> {user.companyId}</p>
                 <p><strong>Role:</strong> {user.role}</p>
-                <p><strong>Rate:</strong> ${user.rate ? user.rate : '0.00'}</p>
               </div>
             </>
           )}
@@ -991,7 +943,7 @@ function App() {
             <>
               <h1 className="dashboard-header">Welcome, {user.name}!</h1>
               <div className="profile-card">
-                <h3>My Profile Details</h3>
+                <h3>Profile Details</h3>
                 <p><strong>Email:</strong> {user.email}</p>
                 <p><strong>Company ID:</strong> {user.companyId}</p>
                 <p><strong>Role:</strong> {user.role}</p>
@@ -1021,6 +973,23 @@ function App() {
                     onChange={(e) => setNric(e.target.value)} 
                     className="form-input" 
                   />
+                  <select 
+                    value={jobPosition} 
+                    onChange={(e) => setJobPosition(e.target.value)} 
+                    className="form-input"
+                  >
+                    <option value="">Select Job Position</option>
+                    <option value="P103 Nightshift">P103 Nightshift</option>
+                    <option value="Cc09b Dayshift">Cc09b Dayshift</option>
+                    <option value="Changi T5 Dayshift">Changi T5 Dayshift</option>
+                    <option value="Changi T5 Nightshift">Changi T5 Nightshift</option>
+                    <option value="C12A/C12B">C12A/C12B</option>
+                    <option value="Woodland ICA Dayshift">Woodland ICA Dayshift</option>
+                    <option value="Xcmg - S.E Crane">Xcmg - S.E Crane</option>
+                    <option value="HIROSE">HIROSE</option>
+                    <option value="CR 106 Nightshift (Adhoc)">CR 106 Nightshift (Adhoc)</option>
+                    <option value="Relieve Operator">Relieve Operator</option>
+                  </select>
                   <button type="submit" className="action-btn">Update Profile</button>
                 </form>
               </div>
@@ -1048,7 +1017,7 @@ function App() {
             </>
           )}
 
-                    {activePage === 'Jobs' && (
+          {activePage === 'Jobs' && (
             <>
               <h1 className="dashboard-header">Job Board</h1>
               <div className="data-section">

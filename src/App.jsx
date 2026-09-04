@@ -643,8 +643,7 @@ function App() {
                       <ul className="data-list">
                         {companyUsers.map((op) => (
                           <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>{op.name} ({op.email}) - Rate: ${op.rate} - Phone: {op.phoneNumber}</span>
-                            <div>
+<span>{op.name} ({op.email}) - Rate: ${op.rate} - Phone: {op.phoneNumber} - NRIC: {op.nric} - Address: {op.homeAddress}</span>                            <div>
                               <button onClick={() => { setRateUser(op); setRateForm({ rate: op.rate }); }}>Edit Rate</button>
                               {isAdmin && (
                                 <button 
@@ -1028,6 +1027,13 @@ function App() {
                     onChange={(e) => setPhoneNumber(e.target.value)} 
                     className="form-input" 
                   />
+                          <input 
+          type="text" 
+          placeholder="NRIC" 
+          value={nric} 
+          onChange={(e) => setNric(e.target.value)} 
+          className="form-input" 
+        />
                   <button type="submit" className="action-btn">Update Profile</button>
                 </form>
               </div>

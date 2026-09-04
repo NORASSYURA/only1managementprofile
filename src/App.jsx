@@ -15,9 +15,13 @@ function App() {
   const [editForm, setEditForm] = useState({ name: '', email: '', phoneNumber: '' });
   const [rateForm, setRateForm] = useState({ rate: '' });
   const [rateUser, setRateUser] = useState(null);
-  const [schedules, setSchedules] = useState([]);
-  const [showScheduleForm, setShowScheduleForm] = useState(false);
-  const [newSchedule, setNewSchedule] = useState({ title: '', description: '', companyId: '', operatorId: '', status: '' });
+  const [jobs, setJobs] = useState([]);
+  const [showJobForm, setShowJobForm] = useState(false);
+  const [newJob, setNewJob] = useState({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
+  const [offDayRequests, setOffDayRequests] = useState([]);
+  const [myOffDayRequests, setMyOffDayRequests] = useState([]);
+  const [showOffDayForm, setShowOffDayForm] = useState(false);
+  const [newOffDay, setNewOffDay] = useState({ requestedDate: '', reason: '' });
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
@@ -28,16 +32,7 @@ function App() {
   const [homeAddress, setHomeAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [nric, setNric] = useState('');
-  const [jobPosition, setJobPosition] = useState(''); // NEW: Job Position
-  const [jobs, setJobs] = useState([]);
-  const [showJobForm, setShowJobForm] = useState(false);
-  const [newJob, setNewJob] = useState({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
-  const [offDayRequests, setOffDayRequests] = useState([]);
-    const [relieveRequests, setRelieveRequests] = useState([]);
-  const [newRelieve, setNewRelieve] = useState({ date: '', jobPosition: '' });
-  const [myOffDayRequests, setMyOffDayRequests] = useState([]);
-  const [showOffDayForm, setShowOffDayForm] = useState(false);
-  const [newOffDay, setNewOffDay] = useState({ requestedDate: '', reason: '' });
+  const [jobPosition, setJobPosition] = useState('');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [publicHolidays, setPublicHolidays] = useState([
     { date: '2026-01-01', name: 'New Year\'s Day' },
@@ -53,42 +48,26 @@ function App() {
     { date: '2026-12-25', name: 'Christmas Day' }
   ]);
 
-  // Feedback State
   const [allFeedback, setAllFeedback] = useState([]);
   const [myFeedback, setMyFeedback] = useState([]);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [newFeedback, setNewFeedback] = useState({ jobTitle: '', rating: 5, comment: '' });
 
-  // Document State
   const [documents, setDocuments] = useState([]);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [newDocument, setNewDocument] = useState({ fileName: '', fileType: '' });
   const [fileUrl, setFileUrl] = useState('');
   const [viewingDocs, setViewingDocs] = useState(null);
 
+  // NEW STATE FOR RELIEVE
+  const [relieveRequests, setRelieveRequests] = useState([]);
+  const [newRelieve, setNewRelieve] = useState({ date: '', jobPosition: '' });
+
   const isAdmin = user && user.role === 'ADMIN';
   const isManager = user && user.role === 'MANAGER';
   const isAdminOrManager = isAdmin || isManager;
 
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
-
-  const fetchSchedules = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const url = isAdminOrManager 
-        ? `https://operator-backend-1jjp.onrender.com/api/schedule/company/${user.companyId}`
-        : `https://operator-backend-1jjp.onrender.com/api/schedule/operator/${user.id}`;
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setSchedules(data);
-      }
-    } catch (error) {
-      console.log("Could not fetch schedules");
-    }
-  };
 
   const fetchJobs = async () => {
     try {
@@ -147,7 +126,10 @@ function App() {
     } catch (error) {
       console.log("Could not fetch off days");
     }
-      const fetchRelieve = async () => {
+  };
+
+  // NEW FUNCTION FOR RELIEVE
+  const fetchRelieve = async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/relieve/company/${user.companyId}`, {
@@ -160,7 +142,6 @@ function App() {
     } catch (error) {
       console.log("Could not fetch relieve requests");
     }
-  };
   };
 
   const fetchDocuments = async () => {
@@ -311,7 +292,6 @@ function App() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ ...newOffDay, operatorId: user.id, operatorName: user.name, companyId: user.companyId }),
       });
-      
       if (response.ok) {
         alert("Off day request submitted!");
         setNewOffDay({ requestedDate: '', reason: '' });
@@ -319,7 +299,14 @@ function App() {
         fetchOffDays();
       } else {
         alert("Failed to submit request.");
-          const handleCreateRelieve = async () => {
+      }
+    } catch (error) {
+      alert("Error submitting request.");
+    }
+  };
+
+  // NEW FUNCTION FOR RELIEVE SUBMIT
+  const handleCreateRelieve = async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/relieve/create', {
@@ -401,31 +388,6 @@ function App() {
     }
   };
 
-  const handleCreateSchedule = async () => {
-    if (!newSchedule.title || !newSchedule.operatorId) {
-      alert("Please fill in title and operator ID");
-      return;
-    }
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ...newSchedule, companyId: user.companyId }),
-      });
-      if (response.ok) {
-        alert("Schedule created successfully!");
-        setNewSchedule({ title: '', description: '', operatorId: '', status: '' });
-        setShowScheduleForm(false);
-        fetchSchedules();
-      } else {
-        alert("Failed to create schedule.");
-      }
-    } catch (error) {
-      alert("Error creating schedule.");
-    }
-  };
-
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -441,7 +403,7 @@ function App() {
         localStorage.setItem('userData', JSON.stringify(data.user));
         setActivePage('Overview');
         fetchOffDays();
-                fetchRelieve();
+        fetchRelieve(); // Fetches Relieve on login
       } else {
         setMessage(`Error: ${data.message}`);
       }
@@ -486,7 +448,6 @@ function App() {
     setUser(null);
     setMessage(''); setEmail(''); setPassword('');
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
-    setSchedules([]);
     setRateUser(null);
     setShowForgotPassword(false);
     setForgotEmail('');
@@ -498,6 +459,7 @@ function App() {
     setMyFeedback([]);
     setDocuments([]);
     setViewingDocs(null);
+    setRelieveRequests([]);
   };
 
   const handleDelete = async (id) => {
@@ -909,6 +871,9 @@ function App() {
                           <strong>{day}</strong>
                           {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
                           {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
+                          {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
+                            <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
+                          ))}
                         </div>
                       );
                     })}
@@ -949,7 +914,7 @@ function App() {
             <li onClick={() => setActivePage('My Profile')}>My Profile</li>
             <li onClick={() => setActivePage('Jobs')}>Jobs</li>
             <li onClick={() => { setActivePage('My Off Days'); fetchOffDays(); }}>My Off Days</li>
-            <li onClick={() => setActivePage('Relieve')}>Relieve</li>
+            <li onClick={() => { setActivePage('Relieve'); fetchRelieve(); }}>Relieve</li>
             <li onClick={() => setActivePage('Feedback')}>Feedback</li>
             <li onClick={() => setActivePage('Calendar')}>Calendar</li>
             <li onClick={() => setActivePage('Settings')}>Settings</li>
@@ -968,6 +933,7 @@ function App() {
                 <p><strong>Email:</strong> {user.email}</p>
                 <p><strong>Company ID:</strong> {user.companyId}</p>
                 <p><strong>Role:</strong> {user.role}</p>
+                <p><strong>Rate:</strong> ${user.rate ? user.rate : '0.00'}</p>
               </div>
             </>
           )}
@@ -976,7 +942,7 @@ function App() {
             <>
               <h1 className="dashboard-header">Welcome, {user.name}!</h1>
               <div className="profile-card">
-                <h3>Profile Details</h3>
+                <h3>My Profile Details</h3>
                 <p><strong>Email:</strong> {user.email}</p>
                 <p><strong>Company ID:</strong> {user.companyId}</p>
                 <p><strong>Role:</strong> {user.role}</p>
@@ -1083,39 +1049,6 @@ function App() {
                     <button onClick={handleCreateOffDay} className="action-btn">Submit Request</button>
                   </div>
                 )}
-                          {activePage === 'Relieve' && (
-            <>
-              <h1 className="dashboard-header">Relieve Duty</h1>
-              <div className="data-section">
-                <input type="date" value={newRelieve.date} onChange={(e) => setNewRelieve({ ...newRelieve, date: e.target.value })} className="form-input" />
-                <select value={newRelieve.jobPosition} onChange={(e) => setNewRelieve({ ...newRelieve, jobPosition: e.target.value })} className="form-input">
-                  <option value="">Select Shift</option>
-                  <option value="P103 Nightshift">P103 Nightshift</option>
-                  <option value="Cc09b Dayshift">Cc09b Dayshift</option>
-                  <option value="Changi T5 Dayshift">Changi T5 Dayshift</option>
-                  <option value="Changi T5 Nightshift">Changi T5 Nightshift</option>
-                  <option value="C12A/C12B">C12A/C12B</option>
-                  <option value="Woodland ICA Dayshift">Woodland ICA Dayshift</option>
-                  <option value="Xcmg - S.E Crane">Xcmg - S.E Crane</option>
-                  <option value="HIROSE">HIROSE</option>
-                  <option value="CR 106 Nightshift (Adhoc)">CR 106 Nightshift (Adhoc)</option>
-                </select>
-                <button onClick={handleCreateRelieve} className="action-btn">Submit Relieve</button>
-              </div>
-              <div className="data-section">
-                <h3>My Relieve Duties</h3>
-                {relieveRequests.filter(r => r.relieverId === user.id).length > 0 ? (
-                  <ul className="data-list">
-                    {relieveRequests.filter(r => r.relieverId === user.id).map((req) => (
-                      <li key={req.id}>{req.jobPosition} - {req.date}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No relieve duties assigned.</p>
-                )}
-              </div>
-            </>
-          )}
                 {myOffDayRequests.length > 0 ? (
                   <ul className="data-list">
                     {myOffDayRequests.map((req) => (
@@ -1144,6 +1077,40 @@ function App() {
                   </ul>
                 ) : (
                   <p>No off day requests submitted.</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {activePage === 'Relieve' && (
+            <>
+              <h1 className="dashboard-header">Relieve Duty</h1>
+              <div className="data-section">
+                <input type="date" value={newRelieve.date} onChange={(e) => setNewRelieve({ ...newRelieve, date: e.target.value })} className="form-input" />
+                <select value={newRelieve.jobPosition} onChange={(e) => setNewRelieve({ ...newRelieve, jobPosition: e.target.value })} className="form-input">
+                  <option value="">Select Shift</option>
+                  <option value="P103 Nightshift">P103 Nightshift</option>
+                  <option value="Cc09b Dayshift">Cc09b Dayshift</option>
+                  <option value="Changi T5 Dayshift">Changi T5 Dayshift</option>
+                  <option value="Changi T5 Nightshift">Changi T5 Nightshift</option>
+                  <option value="C12A/C12B">C12A/C12B</option>
+                  <option value="Woodland ICA Dayshift">Woodland ICA Dayshift</option>
+                  <option value="Xcmg - S.E Crane">Xcmg - S.E Crane</option>
+                  <option value="HIROSE">HIROSE</option>
+                  <option value="CR 106 Nightshift (Adhoc)">CR 106 Nightshift (Adhoc)</option>
+                </select>
+                <button onClick={handleCreateRelieve} className="action-btn">Submit Relieve</button>
+              </div>
+              <div className="data-section">
+                <h3>My Relieve Duties</h3>
+                {relieveRequests.filter(r => r.relieverId === user.id).length > 0 ? (
+                  <ul className="data-list">
+                    {relieveRequests.filter(r => r.relieverId === user.id).map((req) => (
+                      <li key={req.id}>{req.jobPosition} - {req.date}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No relieve duties assigned.</p>
                 )}
               </div>
             </>
@@ -1225,6 +1192,9 @@ function App() {
                         <strong>{day}</strong>
                         {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
                         {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
+                        {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
+                          <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
+                        ))}
                       </div>
                     );
                   })}

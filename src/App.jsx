@@ -33,6 +33,8 @@ function App() {
   const [showJobForm, setShowJobForm] = useState(false);
   const [newJob, setNewJob] = useState({ title: '', description: '', location: '', startDate: '', endDate: '', rate: '' });
   const [offDayRequests, setOffDayRequests] = useState([]);
+    const [relieveRequests, setRelieveRequests] = useState([]);
+  const [newRelieve, setNewRelieve] = useState({ date: '', jobPosition: '' });
   const [myOffDayRequests, setMyOffDayRequests] = useState([]);
   const [showOffDayForm, setShowOffDayForm] = useState(false);
   const [newOffDay, setNewOffDay] = useState({ requestedDate: '', reason: '' });
@@ -145,6 +147,20 @@ function App() {
     } catch (error) {
       console.log("Could not fetch off days");
     }
+      const fetchRelieve = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/relieve/company/${user.companyId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRelieveRequests(data);
+      }
+    } catch (error) {
+      console.log("Could not fetch relieve requests");
+    }
+  };
   };
 
   const fetchDocuments = async () => {
@@ -295,11 +311,26 @@ function App() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ ...newOffDay, operatorId: user.id, operatorName: user.name, companyId: user.companyId }),
       });
+      
       if (response.ok) {
         alert("Off day request submitted!");
         setNewOffDay({ requestedDate: '', reason: '' });
         setShowOffDayForm(false);
         fetchOffDays();
+      } else {
+        alert("Failed to submit request.");
+          const handleCreateRelieve = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://operator-backend-1jjp.onrender.com/api/relieve/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ ...newRelieve, relieverId: user.id, relieverName: user.name, companyId: user.companyId }),
+      });
+      if (response.ok) {
+        alert("Relieve request submitted!");
+        setNewRelieve({ date: '', jobPosition: '' });
+        fetchRelieve();
       } else {
         alert("Failed to submit request.");
       }
@@ -410,6 +441,7 @@ function App() {
         localStorage.setItem('userData', JSON.stringify(data.user));
         setActivePage('Overview');
         fetchOffDays();
+                fetchRelieve();
       } else {
         setMessage(`Error: ${data.message}`);
       }

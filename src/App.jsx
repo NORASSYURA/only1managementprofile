@@ -1051,24 +1051,7 @@ function App() {
             </>
           )}
 
-          {activePage === 'My Schedules' && (
-            <>
-              <h1 className="dashboard-header">My Schedules</h1>
-              <div className="data-section">
-                {schedules.length > 0 ? (
-                  <ul className="data-list">
-                    {schedules.map((sch) => (
-                      <li key={sch.id}>{sch.title}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No schedules available right now.</p>
-                )}
-              </div>
-            </>
-          )}
-
-          {activePage === 'Jobs' && (
+                    {activePage === 'Jobs' && (
             <>
               <h1 className="dashboard-header">Job Board</h1>
               <div className="data-section">

@@ -607,7 +607,6 @@ function App() {
             <ul>
               <li onClick={() => setActivePage('Overview')}>Overview</li>
               <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
-              <li onClick={() => setActivePage('Schedule')}>Schedule</li>
               <li onClick={() => setActivePage('Jobs')}>Jobs</li>
               <li onClick={() => { setActivePage('Requests'); fetchOffDays(); }}>
                 Off Day Requests
@@ -790,19 +789,6 @@ function App() {
               </>
             )}
 
-            {activePage === 'Schedule' && (
-              <>
-                <h1 className="dashboard-header">All Schedules</h1>
-                <div className="data-section">
-                  <button onClick={() => setShowScheduleForm(!showScheduleForm)} className="action-btn">+ Create Schedule</button>
-                  {showScheduleForm && (
-                    <div style={{ marginBottom: '10px' }}>
-                      <input placeholder="Title" value={newSchedule.title} onChange={(e) => setNewSchedule({ ...newSchedule, title: e.target.value })} className="form-input" />
-                      <input placeholder="Description" value={newSchedule.description} onChange={(e) => setNewSchedule({ ...newSchedule, description: e.target.value })} className="form-input" />
-                      <input placeholder="Operator ID" value={newSchedule.operatorId} onChange={(e) => setNewSchedule({ ...newSchedule, operatorId: e.target.value })} className="form-input" />
-                      <button onClick={handleCreateSchedule} className="action-btn">Save Schedule</button>
-                    </div>
-                  )}
                   {schedules.length > 0 ? (
                     <ul className="data-list">
                       {schedules.map((sch) => (
@@ -979,7 +965,6 @@ function App() {
           <ul>
             <li onClick={() => setActivePage('Overview')}>Overview</li>
             <li onClick={() => setActivePage('My Profile')}>My Profile</li>
-            <li onClick={() => setActivePage('My Schedules')}>My Schedules</li>
             <li onClick={() => setActivePage('Jobs')}>Jobs</li>
             <li onClick={() => { setActivePage('My Off Days'); fetchOffDays(); }}>My Off Days</li>
             <li onClick={() => setActivePage('Feedback')}>Feedback</li>

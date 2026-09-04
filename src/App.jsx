@@ -332,8 +332,7 @@ function App() {
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/operators/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber }),
-      });
+        body: JSON.stringify({ name: user.name, email: user.email, rate: user.rate, homeAddress, phoneNumber, nric }),      });
       const data = await response.json();
       if (response.ok) {
         alert("Profile updated successfully!");

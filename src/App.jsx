@@ -799,10 +799,7 @@ function App() {
                     <p>No schedules yet.</p>
                   )}
                 </div>
-              </>
-            )}
-
-            {activePage === 'Jobs' && (
+                  {activePage === 'Jobs' && (
               <>
                 <h1 className="dashboard-header">Job Board</h1>
                 <div className="data-section">

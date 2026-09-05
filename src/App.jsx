@@ -647,8 +647,7 @@ function App() {
                       <ul className="data-list">
                         {companyUsers.map((op) => (
                           <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>{op.name} ({op.email}) - NRIC: {op.nric} - Job: {op.jobPosition}</span>
-                            <div>
+<span>{op.name} ({op.email}) - Phone: {op.phoneNumber} - NRIC: {op.nric} - Job: {op.jobPosition} - Address: {op.homeAddress}</span>                            <div>
                               {isAdmin && (
                                 <button onClick={() => handleDelete(op.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', marginLeft: '8px' }}>Delete</button>
                               )}

@@ -106,22 +106,18 @@ function App() {
     }
   };
 
-  const fetchOffDays = async () => {
+   const fetchOffDays = async () => {
     try {
       const token = localStorage.getItem('token');
-      const url = isAdminOrManager 
-        ? `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`
-        : `https://operator-backend-1jjp.onrender.com/api/offday/operator/${user.id}`;
+      // ALWAYS fetch company-wide data!
+      const url = `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`;
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.ok) {
         const data = await response.json();
-        if (isAdminOrManager) {
-          setOffDayRequests(data);
-        } else {
-          setMyOffDayRequests(data);
-        }
+        setOffDayRequests(data); // Store ALL requests
+        setMyOffDayRequests(data); // Make sure the calendar has data
       }
     } catch (error) {
       console.log("Could not fetch off days");
@@ -559,9 +555,10 @@ function App() {
     return publicHolidays.find(h => h.date === dateStr);
   };
 
-  const getOffDayStatus = (day) => {
+   const getOffDayStatus = (day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const request = myOffDayRequests.find(r => r.requestedDate === dateStr);
+    // Find ANY request from the company on this date
+    const request = offDayRequests.find(r => r.requestedDate === dateStr);
     return request ? request.status : null;
   };
 

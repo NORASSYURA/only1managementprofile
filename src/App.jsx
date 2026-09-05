@@ -570,7 +570,6 @@ function App() {
       setForgotMessage('Server is not running or CORS error!');
     }
   };
-
   // RESTORE SESSION ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem('userData');
@@ -578,10 +577,14 @@ function App() {
       try {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
+        setHomeAddress(parsedUser.homeAddress || '');
+        setPhoneNumber(parsedUser.phoneNumber || '');
+        setNric(parsedUser.nric || '');
+        setJobPosition(parsedUser.jobPosition || '');
+        
         const page = localStorage.getItem('currentPage');
         setActivePage(page || 'Overview');
 
-        // Fetch data immediately after restoring user
         const token = localStorage.getItem('token');
         if (token && parsedUser) {
           fetchOffDays();
@@ -592,7 +595,6 @@ function App() {
       }
     }
   }, []);
-
   if (user) {
     if (isAdminOrManager) {
       return (

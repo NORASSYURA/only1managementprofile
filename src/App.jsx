@@ -402,6 +402,7 @@ function App() {
         setUser(data.user);
         localStorage.setItem('userData', JSON.stringify(data.user));
         setActivePage('Overview');
+        localStorage.setItem('currentPage', 'Overview');
         fetchOffDays();
         fetchRelieve(); // Fetches Relieve on login
       } else {
@@ -445,6 +446,7 @@ function App() {
     }
     localStorage.removeItem('token');
     localStorage.removeItem('userData');
+    localStorage.removeItem('currentPage');
     setUser(null);
     setMessage(''); setEmail(''); setPassword('');
     setActiveUsers([]); setCompanyUsers([]); setShowCompany(false);
@@ -593,8 +595,7 @@ function App() {
               <p style={{ fontSize: '12px', opacity: 0.8 }}>UEN: 53530731D</p>
             </div>
             <ul>
-              <li onClick={() => setActivePage('Overview')}>Overview</li>
-              <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
+<li onClick={() => { setActivePage('Overview'); localStorage.setItem('currentPage', 'Overview'); }}>Overview</li>              <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
               <li onClick={() => setActivePage('Jobs')}>Jobs</li>
               <li onClick={() => { setActivePage('Requests'); fetchOffDays(); }}>
                 Off Day Requests

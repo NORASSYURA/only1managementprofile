@@ -1283,9 +1283,6 @@ function App() {
           </div>
         )}
         <div className="error-msg">{message}</div>
-                <div style={{ textAlign: 'center', marginTop: '10px' }}>
-          <button onClick={() => setShowForgotPassword(true)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Forgot Password?</button>
-        </div>
         {showForgotPassword && (
           <div style={{ marginTop: '10px' }}>
             <form onSubmit={handleForgotPassword}>

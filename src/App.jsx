@@ -545,12 +545,13 @@ function App() {
     return publicHolidays.find(h => h.date === dateStr);
   };
 
-  const getOffDayStatus = (day) => {
+   const getOffDayStatus = (day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const request = offDayRequests.find(r => r.requestedDate === dateStr);
-    return request ? request.status : null;
+    
+    // If there is a request, we create a small object with the Name and Status
+    return request ? { name: request.operatorName, status: request.status } : null;
   };
-
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     try {
@@ -786,13 +787,12 @@ function App() {
                           cursor: 'pointer',
                           backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
                         }}>
-                          <strong>{day}</strong>
+                                                   <strong>{day}</strong>
                           {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                          {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
+                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
                           {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
                             <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
-                          ))}
-                        </div>
+                          ))}                        </div>
                       );
                     })}
                   </div>

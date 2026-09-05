@@ -52,14 +52,13 @@ function App() {
   const [myFeedback, setMyFeedback] = useState([]);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [newFeedback, setNewFeedback] = useState({ jobTitle: '', rating: 5, comment: '' });
-
   const [documents, setDocuments] = useState([]);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [newDocument, setNewDocument] = useState({ fileName: '', fileType: '' });
   const [fileUrl, setFileUrl] = useState('');
   const [viewingDocs, setViewingDocs] = useState(null);
 
-  // NEW STATE FOR RELIEVE
+  // Relieve State
   const [relieveRequests, setRelieveRequests] = useState([]);
   const [newRelieve, setNewRelieve] = useState({ date: '', jobPosition: '' });
 
@@ -68,6 +67,40 @@ function App() {
   const isAdminOrManager = isAdmin || isManager;
 
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
+
+  // Fetch company-wide Off Days (For Calendar)
+  const fetchOffDays = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setOffDayRequests(data);
+        setMyOffDayRequests(data);
+      }
+    } catch (error) {
+      console.log("Could not fetch off days");
+    }
+  };
+
+  // Fetch company-wide Relieve (For Calendar)
+  const fetchRelieve = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/relieve/company/${user.companyId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRelieveRequests(data);
+      }
+    } catch (error) {
+      console.log("Could not fetch relieve requests");
+    }
+  };
 
   const fetchJobs = async () => {
     try {
@@ -87,7 +120,7 @@ function App() {
   const fetchFeedback = async () => {
     try {
       const token = localStorage.getItem('token');
-      const url = isAdminOrManager 
+      const url = isAdminOrManager
         ? 'https://operator-backend-1jjp.onrender.com/api/feedback/all'
         : `https://operator-backend-1jjp.onrender.com/api/feedback/operator/${user.id}`;
       const response = await fetch(url, {
@@ -95,48 +128,11 @@ function App() {
       });
       if (response.ok) {
         const data = await response.json();
-        if (isAdminOrManager) {
-          setAllFeedback(data);
-        } else {
-          setMyFeedback(data);
-        }
+        setAllFeedback(data);
+        setMyFeedback(data);
       }
     } catch (error) {
       console.log("Could not fetch feedback");
-    }
-  };
-
-   const fetchOffDays = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      // ALWAYS fetch company-wide data!
-      const url = `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`;
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setOffDayRequests(data); // Store ALL requests
-        setMyOffDayRequests(data); // Make sure the calendar has data
-      }
-    } catch (error) {
-      console.log("Could not fetch off days");
-    }
-  };
-
-  // NEW FUNCTION FOR RELIEVE
-  const fetchRelieve = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/relieve/company/${user.companyId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setRelieveRequests(data);
-      }
-    } catch (error) {
-      console.log("Could not fetch relieve requests");
     }
   };
 
@@ -178,16 +174,11 @@ function App() {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', UPLOAD_PRESET);
-
     try {
-      const response = await fetch(CLOUDINARY_URL, {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
       const data = await response.json();
       setFileUrl(data.secure_url);
       setNewDocument({ fileName: file.name, fileType: file.type });
@@ -301,7 +292,6 @@ function App() {
     }
   };
 
-  // NEW FUNCTION FOR RELIEVE SUBMIT
   const handleCreateRelieve = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -400,7 +390,7 @@ function App() {
         setActivePage('Overview');
         localStorage.setItem('currentPage', 'Overview');
         fetchOffDays();
-        fetchRelieve(); // Fetches Relieve on login
+        fetchRelieve();
       } else {
         setMessage(`Error: ${data.message}`);
       }
@@ -555,9 +545,8 @@ function App() {
     return publicHolidays.find(h => h.date === dateStr);
   };
 
-   const getOffDayStatus = (day) => {
+  const getOffDayStatus = (day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    // Find ANY request from the company on this date
     const request = offDayRequests.find(r => r.requestedDate === dateStr);
     return request ? request.status : null;
   };
@@ -581,6 +570,28 @@ function App() {
     }
   };
 
+  // RESTORE SESSION ON REFRESH
+  useEffect(() => {
+    const savedUser = localStorage.getItem('userData');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        const page = localStorage.getItem('currentPage');
+        setActivePage(page || 'Overview');
+
+        // Fetch data immediately after restoring user
+        const token = localStorage.getItem('token');
+        if (token && parsedUser) {
+          fetchOffDays();
+          fetchRelieve();
+        }
+      } catch (e) {
+        localStorage.removeItem('userData');
+      }
+    }
+  }, []);
+
   if (user) {
     if (isAdminOrManager) {
       return (
@@ -592,17 +603,18 @@ function App() {
               <p style={{ fontSize: '12px', opacity: 0.8 }}>UEN: 53530731D</p>
             </div>
             <ul>
-<li onClick={() => { setActivePage('Overview'); localStorage.setItem('currentPage', 'Overview'); }}>Overview</li>              <li onClick={() => { setActivePage('Operators'); if (activePage !== 'Operators') fetchCompanyUsers(); }}>Operators</li>
-              <li onClick={() => setActivePage('Jobs')}>Jobs</li>
-              <li onClick={() => { setActivePage('Requests'); fetchOffDays(); }}>
+              <li onClick={() => { setActivePage('Overview'); localStorage.setItem('currentPage', 'Overview'); }}>Overview</li>
+              <li onClick={() => { setActivePage('Operators'); localStorage.setItem('currentPage', 'Operators'); fetchCompanyUsers(); }}>Operators</li>
+              <li onClick={() => { setActivePage('Jobs'); localStorage.setItem('currentPage', 'Jobs'); }}>Jobs</li>
+              <li onClick={() => { setActivePage('Requests'); localStorage.setItem('currentPage', 'Requests'); fetchOffDays(); }}>
                 Off Day Requests
                 {offDayRequests.some(r => r.status === 'PENDING') && (
                   <span className="blinking"> 🔴</span>
                 )}
               </li>
-              <li onClick={() => setActivePage('Feedback')}>Feedback</li>
-              <li onClick={() => setActivePage('Calendar')}>Calendar</li>
-              <li onClick={() => setActivePage('Settings')}>Settings</li>
+              <li onClick={() => { setActivePage('Feedback'); localStorage.setItem('currentPage', 'Feedback'); }}>Feedback</li>
+              <li onClick={() => { setActivePage('Calendar'); localStorage.setItem('currentPage', 'Calendar'); fetchOffDays(); fetchRelieve(); }}>Calendar</li>
+              <li onClick={() => { setActivePage('Settings'); localStorage.setItem('currentPage', 'Settings'); }}>Settings</li>
             </ul>
             <div style={{ marginTop: 'auto' }}>
               <button onClick={handleLogout} className="logout-btn" style={{ width: '100%' }}>Logout</button>
@@ -632,53 +644,14 @@ function App() {
                       <ul className="data-list">
                         {companyUsers.map((op) => (
                           <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-<span>{op.name} ({op.email}) - Rate: ${op.rate} - Phone: {op.phoneNumber} - NRIC: {op.nric} - Job: {op.jobPosition} - Address: {op.homeAddress}</span>                            <div>
+                            <span>{op.name} ({op.email}) - NRIC: {op.nric} - Job: {op.jobPosition}</span>
+                            <div>
                               {isAdmin && (
-                                <button 
-                                  onClick={() => handleDelete(op.id)}
-                                  style={{ 
-                                    backgroundColor: '#e53e3e', 
-                                    color: 'white', 
-                                    border: 'none', 
-                                    padding: '4px 10px', 
-                                    borderRadius: '4px', 
-                                    cursor: 'pointer', 
-                                    marginLeft: '8px' 
-                                  }}
-                                >
-                                  Delete
-                                </button>
+                                <button onClick={() => handleDelete(op.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', marginLeft: '8px' }}>Delete</button>
                               )}
-                              <button 
-                                onClick={() => handleEditClick(op)}
-                                style={{ 
-                                  backgroundColor: '#3498db', 
-                                  color: 'white', 
-                                  border: 'none', 
-                                  padding: '4px 10px', 
-                                  borderRadius: '4px', 
-                                  cursor: 'pointer', 
-                                  marginLeft: '8px' 
-                                }}
-                              >
-                                Edit
-                              </button>
+                              <button onClick={() => handleEditClick(op)} style={{ backgroundColor: '#3498db', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', marginLeft: '8px' }}>Edit</button>
                               <a href={`tel:${op.phoneNumber}`} style={{ marginLeft: '8px', backgroundColor: '#4CAF50', color: 'white', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '14px' }}>Call</a>
-                              <button 
-                                onClick={() => fetchOperatorDocs(op.id)}
-                                style={{ 
-                                  marginLeft: '8px', 
-                                  backgroundColor: '#f59e0b', 
-                                  color: 'white', 
-                                  border: 'none', 
-                                  padding: '4px 10px', 
-                                  borderRadius: '4px', 
-                                  cursor: 'pointer', 
-                                  fontSize: '14px' 
-                                }}
-                              >
-                                View Files
-                              </button>
+                              <button onClick={() => fetchOperatorDocs(op.id)} style={{ marginLeft: '8px', backgroundColor: '#f59e0b', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>View Files</button>
                             </div>
                           </li>
                         ))}
@@ -691,83 +664,11 @@ function App() {
                 {editingUser && (
                   <div className="data-section" style={{ marginTop: '20px' }}>
                     <h3>Edit Operator</h3>
-                    <input 
-                      type="text" 
-                      value={editForm.name} 
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
-                    />
-                    <input 
-                      type="email" 
-                      value={editForm.email} 
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
-                    />
-                    <input 
-                      type="text" 
-                      value={editForm.phoneNumber} 
-                      onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
-                      style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
-                    />
-                    <button 
-                      onClick={handleSaveEdit}
-                      style={{ 
-                        backgroundColor: '#28a745', 
-                        color: 'white', 
-                        border: 'none', 
-                        padding: '10px 20px', 
-                        cursor: 'pointer' 
-                      }}
-                    >
-                      Save Changes
-                    </button>
-                    <button 
-                      onClick={() => setEditingUser(null)}
-                      style={{ marginLeft: '10px', padding: '10px 20px', cursor: 'pointer' }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-                {rateUser && (
-                  <div className="data-section" style={{ marginTop: '20px' }}>
-                    <h3>Edit Rate for {rateUser.name}</h3>
-                    <input 
-                      type="number" 
-                      placeholder="Rate" 
-                      value={rateForm.rate} 
-                      onChange={(e) => setRateForm({ rate: e.target.value })}
-                      style={{ display: 'block', marginBottom: '10px', padding: '8px', width: '100%' }}
-                    />
-                    <button 
-                      onClick={handleSaveRate}
-                      style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '10px 20px', cursor: 'pointer' }}
-                    >
-                      Save Rate
-                    </button>
-                    <button 
-                      onClick={() => setRateUser(null)}
-                      style={{ marginLeft: '10px', padding: '10px 20px', cursor: 'pointer' }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-                {viewingDocs && (
-                  <div className="data-section" style={{ marginTop: '20px' }}>
-                    <h3>Uploaded Files</h3>
-                    <button onClick={() => setViewingDocs(null)} className="action-btn" style={{ backgroundColor: '#e53e3e' }}>Close</button>
-                    <ul className="data-list">
-                      {viewingDocs.length > 0 ? (
-                        viewingDocs.map((doc) => (
-                          <li key={doc.id}>
-                            <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">{doc.fileName}</a>
-                          </li>
-                        ))
-                      ) : (
-                        <p>No documents uploaded for this operator.</p>
-                      )}
-                    </ul>
+                    <input type="text" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="form-input" />
+                    <input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className="form-input" />
+                    <input type="text" value={editForm.phoneNumber} onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })} className="form-input" />
+                    <button onClick={handleSaveEdit} style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '10px 20px', cursor: 'pointer' }}>Save Changes</button>
+                    <button onClick={() => setEditingUser(null)} style={{ marginLeft: '10px', padding: '10px 20px', cursor: 'pointer' }}>Cancel</button>
                   </div>
                 )}
               </>
@@ -793,7 +694,7 @@ function App() {
                     <ul className="data-list">
                       {jobs.map((job) => (
                         <li key={job.id}>
-                          <strong>{job.title}</strong> - {job.location} - ${job.rate} 
+                          <strong>{job.title}</strong> - {job.location} - ${job.rate}
                           <br />{job.description}
                         </li>
                       ))}
@@ -841,8 +742,8 @@ function App() {
                   {allFeedback.length > 0 ? (
                     <ul className="data-list">
                       {allFeedback.map((fb) => (
-                        <li key={fb.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                          <strong>{fb.operatorName}</strong> rated <strong>{fb.jobTitle}</strong> 
+                        <li key={fb.id}>
+                          <strong>{fb.operatorName}</strong> rated <strong>{fb.jobTitle}</strong>
                           <br />Rating: {fb.rating} / 5
                           <br />Comment: {fb.comment}
                         </li>
@@ -874,14 +775,15 @@ function App() {
                     {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
                       const day = i + 1;
                       const holiday = isPublicHoliday(day);
-                      const offDayStatus = getOffDayStatus(day);
                       const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                      const offDayStatus = getOffDayStatus(day);
                       return (
                         <div key={day} style={{
                           padding: '10px',
                           textAlign: 'center',
                           border: '1px solid #eee',
                           borderRadius: '5px',
+                          cursor: 'pointer',
                           backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
                         }}>
                           <strong>{day}</strong>
@@ -908,7 +810,6 @@ function App() {
                     <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-input" />
                     <button type="submit" className="action-btn">Change Password</button>
                   </form>
-                  {passwordMessage && <p style={{ color: passwordMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px' }}>{passwordMessage}</p>}
                 </div>
               </>
             )}
@@ -926,14 +827,14 @@ function App() {
             <p style={{ fontSize: '12px', opacity: 0.8 }}>UEN: 53530731D</p>
           </div>
           <ul>
-            <li onClick={() => setActivePage('Overview')}>Overview</li>
-            <li onClick={() => setActivePage('My Profile')}>My Profile</li>
-            <li onClick={() => setActivePage('Jobs')}>Jobs</li>
-            <li onClick={() => { setActivePage('My Off Days'); fetchOffDays(); }}>My Off Days</li>
-            <li onClick={() => { setActivePage('Relieve'); fetchRelieve(); }}>Relieve</li>
-            <li onClick={() => setActivePage('Feedback')}>Feedback</li>
-            <li onClick={() => setActivePage('Calendar')}>Calendar</li>
-            <li onClick={() => setActivePage('Settings')}>Settings</li>
+            <li onClick={() => { setActivePage('Overview'); localStorage.setItem('currentPage', 'Overview'); }}>Overview</li>
+            <li onClick={() => { setActivePage('My Profile'); localStorage.setItem('currentPage', 'My Profile'); }}>My Profile</li>
+            <li onClick={() => { setActivePage('Jobs'); localStorage.setItem('currentPage', 'Jobs'); }}>Jobs</li>
+            <li onClick={() => { setActivePage('My Off Days'); localStorage.setItem('currentPage', 'My Off Days'); fetchOffDays(); }}>My Off Days</li>
+            <li onClick={() => { setActivePage('Relieve'); localStorage.setItem('currentPage', 'Relieve'); fetchRelieve(); }}>Relieve</li>
+            <li onClick={() => { setActivePage('Feedback'); localStorage.setItem('currentPage', 'Feedback'); }}>Feedback</li>
+            <li onClick={() => { setActivePage('Calendar'); localStorage.setItem('currentPage', 'Calendar'); fetchOffDays(); fetchRelieve(); }}>Calendar</li>
+            <li onClick={() => { setActivePage('Settings'); localStorage.setItem('currentPage', 'Settings'); }}>Settings</li>
           </ul>
           <div style={{ marginTop: 'auto' }}>
             <button onClick={handleLogout} className="logout-btn" style={{ width: '100%' }}>Logout</button>
@@ -967,32 +868,10 @@ function App() {
               <div className="data-section" style={{ marginTop: '20px' }}>
                 <h3>Update My Profile</h3>
                 <form onSubmit={handleProfileUpdate}>
-                  <input 
-                    type="text" 
-                    placeholder="Home Address" 
-                    value={homeAddress} 
-                    onChange={(e) => setHomeAddress(e.target.value)} 
-                    className="form-input" 
-                  />
-                  <input 
-                    type="text" 
-                    placeholder="Phone Number" 
-                    value={phoneNumber} 
-                    onChange={(e) => setPhoneNumber(e.target.value)} 
-                    className="form-input" 
-                  />
-                  <input 
-                    type="text" 
-                    placeholder="NRIC" 
-                    value={nric} 
-                    onChange={(e) => setNric(e.target.value)} 
-                    className="form-input" 
-                  />
-                  <select 
-                    value={jobPosition} 
-                    onChange={(e) => setJobPosition(e.target.value)} 
-                    className="form-input"
-                  >
+                  <input type="text" placeholder="Home Address" value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} className="form-input" />
+                  <input type="text" placeholder="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="form-input" />
+                  <input type="text" placeholder="NRIC" value={nric} onChange={(e) => setNric(e.target.value)} className="form-input" />
+                  <select value={jobPosition} onChange={(e) => setJobPosition(e.target.value)} className="form-input">
                     <option value="">Select Job Position</option>
                     <option value="P103 Nightshift">P103 Nightshift</option>
                     <option value="Cc09b Dayshift">Cc09b Dayshift</option>
@@ -1020,9 +899,7 @@ function App() {
                 {documents.length > 0 ? (
                   <ul className="data-list">
                     {documents.map((doc) => (
-                      <li key={doc.id}>
-                        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">{doc.fileName}</a>
-                      </li>
+                      <li key={doc.id}><a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">{doc.fileName}</a></li>
                     ))}
                   </ul>
                 ) : (
@@ -1039,11 +916,7 @@ function App() {
                 {jobs.length > 0 ? (
                   <ul className="data-list">
                     {jobs.map((job) => (
-                      <li key={job.id}>
-                        <strong>{job.title}</strong> - {job.location} - ${job.rate} 
-                        <br />{job.description}
-                        <br /><button className="action-btn">Sign Up</button>
-                      </li>
+                      <li key={job.id}><strong>{job.title}</strong> - {job.location} - ${job.rate}<br />{job.description}<br /><button className="action-btn">Sign Up</button></li>
                     ))}
                   </ul>
                 ) : (
@@ -1068,27 +941,7 @@ function App() {
                 {myOffDayRequests.length > 0 ? (
                   <ul className="data-list">
                     {myOffDayRequests.map((req) => (
-                      <li key={req.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
-                        </div>
-                        {req.status === 'PENDING' && (
-                          <button 
-                            onClick={() => handleCancelOffDay(req.id)}
-                            style={{ 
-                              backgroundColor: '#e53e3e', 
-                              color: 'white', 
-                              border: 'none', 
-                              padding: '4px 10px', 
-                              borderRadius: '4px', 
-                              cursor: 'pointer',
-                              fontSize: '12px'
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        )}
-                      </li>
+                      <li key={req.id}>Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong></li>
                     ))}
                   </ul>
                 ) : (
@@ -1154,10 +1007,7 @@ function App() {
                 {myFeedback.length > 0 ? (
                   <ul className="data-list">
                     {myFeedback.map((fb) => (
-                      <li key={fb.id}>
-                        <strong>{fb.jobTitle}</strong> - Rating: {fb.rating}/5
-                        <br />Comment: {fb.comment}
-                      </li>
+                      <li key={fb.id}><strong>{fb.jobTitle}</strong> - Rating: {fb.rating}/5<br />Comment: {fb.comment}</li>
                     ))}
                   </ul>
                 ) : (
@@ -1186,25 +1036,16 @@ function App() {
                   {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
                     const day = i + 1;
                     const holiday = isPublicHoliday(day);
-                    const offDayStatus = getOffDayStatus(day);
                     const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const offDayStatus = getOffDayStatus(day);
                     return (
-                      <div key={day}
-                        onClick={() => {
-                          if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
-                            setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
-                            setTimeout(() => handleCreateOffDay(), 100);
-                          }
-                        }}
-                        style={{
-                          padding: '10px',
-                          textAlign: 'center',
-                          border: '1px solid #eee',
-                          borderRadius: '5px',
-                          cursor: 'pointer',
-                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                        }}
-                      >
+                      <div key={day} style={{
+                        padding: '10px',
+                        textAlign: 'center',
+                        border: '1px solid #eee',
+                        borderRadius: '5px',
+                        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                      }}>
                         <strong>{day}</strong>
                         {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
                         {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
@@ -1229,7 +1070,6 @@ function App() {
                   <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-input" />
                   <button type="submit" className="action-btn">Change Password</button>
                 </form>
-                {passwordMessage && <p style={{ color: passwordMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px' }}>{passwordMessage}</p>}
               </div>
             </>
           )}
@@ -1242,9 +1082,7 @@ function App() {
     <div className="login-container">
       <div className="login-box">
         <img src={LOGO_URL} alt="Company Logo" style={{ display: 'block', margin: '0 auto 15px', width: '150px', borderRadius: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }} />
-        <h1 className="login-title" style={{ fontSize: '20px', fontWeight: '800', color: '#333', textAlign: 'center', marginBottom: '5px' }}>
-          THE ONLY1PROFILEMANAGEMENT
-        </h1>
+        <h1 className="login-title" style={{ fontSize: '20px', fontWeight: '800', color: '#333', textAlign: 'center', marginBottom: '5px' }}>THE ONLY1PROFILEMANAGEMENT</h1>
         <p style={{ textAlign: 'center', marginBottom: '25px', color: '#666', fontSize: '14px' }}>UEN: 53530731D</p>
 
         <form onSubmit={isRegistering ? handleRegister : handleLogin}>
@@ -1256,8 +1094,6 @@ function App() {
                 <option value="ADMIN">Admin</option>
               </select>
               <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} className="form-input" />
-              <input type="text" placeholder="Home Address" value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} className="form-input" />
-              <input type="text" placeholder="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="form-input" />
             </div>
           )}
           <div className="form-group">
@@ -1268,7 +1104,7 @@ function App() {
           </div>
           <button type="submit" className="login-btn">{isRegistering ? 'Sign Up' : 'Login'}</button>
         </form>
-        
+
         <div style={{ textAlign: 'center', marginTop: '10px' }}>
           <button onClick={() => setShowForgotPassword(true)} style={{ color: '#667eea', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>Forgot Password?</button>
         </div>
@@ -1281,7 +1117,7 @@ function App() {
             {forgotMessage && <p style={{ color: forgotMessage.includes('Error') ? '#e53e3e' : '#38a169', marginTop: '10px', textAlign: 'center', fontWeight: 'bold', padding: '10px', borderRadius: '5px', backgroundColor: forgotMessage.includes('Error') ? '#fce4e4' : '#e6fffa' }}>{forgotMessage}</p>}
           </div>
         )}
-        
+
         <div className="error-msg">{message}</div>
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
           {isRegistering ? (

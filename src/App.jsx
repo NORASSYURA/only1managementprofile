@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import CoordinatorDashboard from './CoordinatorDashboard';
 
 function App() {
   const [email, setEmail] = useState('');
@@ -607,6 +608,7 @@ function App() {
             </div>
             <ul>
               <li onClick={() => { setActivePage('Overview'); localStorage.setItem('currentPage', 'Overview'); }}>Overview</li>
+                            <li onClick={() => { setActivePage('Coordinator'); localStorage.setItem('currentPage', 'Coordinator'); }}>Coordinator Dashboard</li>
               <li onClick={() => { setActivePage('Operators'); localStorage.setItem('currentPage', 'Operators'); fetchCompanyUsers(); }}>Operators</li>
               <li onClick={() => { setActivePage('Jobs'); localStorage.setItem('currentPage', 'Jobs'); }}>Jobs</li>
               <li onClick={() => { setActivePage('Requests'); localStorage.setItem('currentPage', 'Requests'); fetchOffDays(); }}>
@@ -625,6 +627,9 @@ function App() {
           </div>
 
           <div className="main-content">
+                        {activePage === 'Coordinator' && (
+              <CoordinatorDashboard />
+            )}
             {activePage === 'Overview' && (
               <>
                 <h1 className="dashboard-header">Welcome, {user.name}!</h1>

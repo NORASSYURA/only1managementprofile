@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import CoordinatorDashboard from './CoordinatorDashboard';
+import CoordinatorDashboard from './CoordinatorDashboard'; // <--- ADDED THIS IMPORT
 
 function App() {
   const [email, setEmail] = useState('');
@@ -59,7 +59,6 @@ function App() {
   const [fileUrl, setFileUrl] = useState('');
   const [viewingDocs, setViewingDocs] = useState(null);
 
-  // Relieve State
   const [relieveRequests, setRelieveRequests] = useState([]);
   const [newRelieve, setNewRelieve] = useState({ date: '', jobPosition: '' });
 
@@ -69,7 +68,21 @@ function App() {
 
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
 
-  // Fetch company-wide Off Days (For Calendar)
+  const fetchJobs = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/jobs/company/${user.companyId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setJobs(data);
+      }
+    } catch (error) {
+      console.log("Could not fetch jobs");
+    }
+  };
+
   const fetchOffDays = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -87,7 +100,6 @@ function App() {
     }
   };
 
-  // Fetch company-wide Relieve (For Calendar)
   const fetchRelieve = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -100,21 +112,6 @@ function App() {
       }
     } catch (error) {
       console.log("Could not fetch relieve requests");
-    }
-  };
-
-  const fetchJobs = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/jobs/company/${user.companyId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setJobs(data);
-      }
-    } catch (error) {
-      console.log("Could not fetch jobs");
     }
   };
 
@@ -546,13 +543,12 @@ function App() {
     return publicHolidays.find(h => h.date === dateStr);
   };
 
-   const getOffDayStatus = (day) => {
+  const getOffDayStatus = (day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const request = offDayRequests.find(r => r.requestedDate === dateStr);
-    
-    // If there is a request, we create a small object with the Name and Status
-    return request ? { name: request.operatorName, status: request.status } : null;
+    return request ? request.status : null;
   };
+
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     try {
@@ -571,6 +567,7 @@ function App() {
       setForgotMessage('Server is not running or CORS error!');
     }
   };
+
   // RESTORE SESSION ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem('userData');
@@ -578,14 +575,8 @@ function App() {
       try {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
-        setHomeAddress(parsedUser.homeAddress || '');
-        setPhoneNumber(parsedUser.phoneNumber || '');
-        setNric(parsedUser.nric || '');
-        setJobPosition(parsedUser.jobPosition || '');
-        
         const page = localStorage.getItem('currentPage');
         setActivePage(page || 'Overview');
-
         const token = localStorage.getItem('token');
         if (token && parsedUser) {
           fetchOffDays();
@@ -596,6 +587,7 @@ function App() {
       }
     }
   }, []);
+
   if (user) {
     if (isAdminOrManager) {
       return (
@@ -608,7 +600,6 @@ function App() {
             </div>
             <ul>
               <li onClick={() => { setActivePage('Overview'); localStorage.setItem('currentPage', 'Overview'); }}>Overview</li>
-                            <li onClick={() => { setActivePage('Coordinator'); localStorage.setItem('currentPage', 'Coordinator'); }}>Coordinator Dashboard</li>
               <li onClick={() => { setActivePage('Operators'); localStorage.setItem('currentPage', 'Operators'); fetchCompanyUsers(); }}>Operators</li>
               <li onClick={() => { setActivePage('Jobs'); localStorage.setItem('currentPage', 'Jobs'); }}>Jobs</li>
               <li onClick={() => { setActivePage('Requests'); localStorage.setItem('currentPage', 'Requests'); fetchOffDays(); }}>
@@ -619,6 +610,7 @@ function App() {
               </li>
               <li onClick={() => { setActivePage('Feedback'); localStorage.setItem('currentPage', 'Feedback'); }}>Feedback</li>
               <li onClick={() => { setActivePage('Calendar'); localStorage.setItem('currentPage', 'Calendar'); fetchOffDays(); fetchRelieve(); }}>Calendar</li>
+              <li onClick={() => { setActivePage('Coordinator'); localStorage.setItem('currentPage', 'Coordinator'); }}>Coordinator Dashboard</li>
               <li onClick={() => { setActivePage('Settings'); localStorage.setItem('currentPage', 'Settings'); }}>Settings</li>
             </ul>
             <div style={{ marginTop: 'auto' }}>
@@ -627,9 +619,6 @@ function App() {
           </div>
 
           <div className="main-content">
-                        {activePage === 'Coordinator' && (
-              <CoordinatorDashboard />
-            )}
             {activePage === 'Overview' && (
               <>
                 <h1 className="dashboard-header">Welcome, {user.name}!</h1>
@@ -652,7 +641,8 @@ function App() {
                       <ul className="data-list">
                         {companyUsers.map((op) => (
                           <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-<span>{op.name} ({op.email}) - Phone: {op.phoneNumber} - NRIC: {op.nric} - Job: {op.jobPosition} - Address: {op.homeAddress}</span>                            <div>
+                            <span>{op.name} ({op.email}) - Phone: {op.phoneNumber} - NRIC: {op.nric} - Job: {op.jobPosition} - Address: {op.homeAddress}</span>
+                            <div>
                               {isAdmin && (
                                 <button onClick={() => handleDelete(op.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', marginLeft: '8px' }}>Delete</button>
                               )}
@@ -763,6 +753,10 @@ function App() {
               </>
             )}
 
+            {activePage === 'Coordinator' && (
+              <CoordinatorDashboard />
+            )}
+
             {activePage === 'Calendar' && (
               <>
                 <h1 className="dashboard-header">Singapore Calendar</h1>
@@ -790,15 +784,15 @@ function App() {
                           textAlign: 'center',
                           border: '1px solid #eee',
                           borderRadius: '5px',
-                          cursor: 'pointer',
                           backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
                         }}>
-                                                   <strong>{day}</strong>
+                          <strong>{day}</strong>
                           {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
+                          {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
                           {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
                             <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
-                          ))}                        </div>
+                          ))}
+                        </div>
                       );
                     })}
                   </div>

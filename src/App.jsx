@@ -2251,12 +2251,12 @@ function App() {
     return publicHolidays.find(h => h.date === dateStr);
   };
 
-  const getOffDayStatus = (day) => {
+    const getOffDayStatus = (day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const request = offDayRequests.find(r => r.requestedDate === dateStr);
     
-    // If there is a request, we create a small object with the Name and Status
-    return request ? { name: request.operatorName, status: request.status } : null;
+    // Return the full request object so we can know the ID
+    return request ? { ...request, dateStr: dateStr } : null;
   };
 
   const handleForgotPassword = async (e) => {

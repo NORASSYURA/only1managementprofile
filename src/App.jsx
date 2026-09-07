@@ -572,7 +572,7 @@ function App() {
       setForgotMessage('Server is not running or CORS error!');
     }
   };
-      // RESTORE SESSION ON REFRESH
+       // RESTORE SESSION ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem('userData');
     if (savedUser) {

@@ -545,12 +545,12 @@ function App() {
     return publicHolidays.find(h => h.date === dateStr);
   };
 
-  const getOffDayStatus = (day) => {
+    const getOffDayStatus = (day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const request = offDayRequests.find(r => r.requestedDate === dateStr);
     
     // If there is a request, we create a small object with the Name and Status
-    return request ? { name: request.operatorName, status: request.status } : null;
+    return request ? { ...request, dateStr: dateStr } : null;
   };
 
   const handleForgotPassword = async (e) => {
@@ -777,23 +777,39 @@ function App() {
                     {Array.from({ length: getFirstDayOfMonth(currentDate) }).map((_, i) => (
                       <div key={`empty-${i}`}></div>
                     ))}
-                    {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
+                                        {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
                       const day = i + 1;
                       const holiday = isPublicHoliday(day);
                       const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                       const offDayStatus = getOffDayStatus(day);
                       return (
-                        <div key={day} style={{
-                          padding: '10px',
-                          textAlign: 'center',
-                          border: '1px solid #eee',
-                          borderRadius: '5px',
-                          cursor: 'pointer',
-                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                        }}>
-                                                    <strong>{day}</strong>
+                        <div 
+                          key={day}
+                          onClick={() => {
+                            if (!holiday && (!offDayStatus || offDayStatus.status === 'REJECTED')) {
+                              if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
+                                setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
+                                setTimeout(() => handleCreateOffDay(), 100);
+                              }
+                            } else if (offDayStatus && offDayStatus.status === 'PENDING') {
+                              alert("Off day request already pending.");
+                            } else if (offDayStatus && offDayStatus.status === 'APPROVED') {
+                              alert("Off day already approved.");
+                            } else if (holiday) {
+                              alert("Cannot request off day for a public holiday.");
+                            }
+                          }} 
+                          style={{
+                            padding: '10px',
+                            textAlign: 'center',
+                            border: '1px solid #eee',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                          }}>
+                          <strong>{day}</strong>
                           {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
+                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.operatorName} {offDayStatus.status}</div>}
                           {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
                             <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
                           ))}
@@ -1038,25 +1054,42 @@ function App() {
                   {Array.from({ length: getFirstDayOfMonth(currentDate) }).map((_, i) => (
                     <div key={`empty-${i}`}></div>
                   ))}
-                  {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
+                                   {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
                     const day = i + 1;
                     const holiday = isPublicHoliday(day);
                     const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const offDayStatus = getOffDayStatus(day);
                     return (
-                      <div key={day} style={{
-                        padding: '10px',
-                        textAlign: 'center',
-                        border: '1px solid #eee',
-                        borderRadius: '5px',
-                        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                      }}>
-                                                  <strong>{day}</strong>
-                          {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
-                          {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
-                            <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
-                          ))}
+                      <div 
+                        key={day}
+                        onClick={() => {
+                          if (!holiday && (!offDayStatus || offDayStatus.status === 'REJECTED')) {
+                            if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
+                              setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
+                              setTimeout(() => handleCreateOffDay(), 100);
+                            }
+                          } else if (offDayStatus && offDayStatus.status === 'PENDING') {
+                            alert("Off day request already pending.");
+                          } else if (offDayStatus && offDayStatus.status === 'APPROVED') {
+                            alert("Off day already approved.");
+                          } else if (holiday) {
+                            alert("Cannot request off day for a public holiday.");
+                          }
+                        }} 
+                        style={{
+                          padding: '10px',
+                          textAlign: 'center',
+                          border: '1px solid #eee',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                        }}>
+                        <strong>{day}</strong>
+                        {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                        {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.operatorName} {offDayStatus.status}</div>}
+                        {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
+                          <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
+                        ))}
                       </div>
                     );
                   })}

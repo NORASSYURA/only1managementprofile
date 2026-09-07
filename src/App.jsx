@@ -69,8 +69,7 @@ function App() {
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
 
   // Fetch company-wide Off Days (For Calendar)
-    const fetchOffDays = async () => {
-    if (!user) return; // ADD THIS LINE!
+  const fetchOffDays = async () => {
     try {
       const token = localStorage.getItem('token');
       const url = `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`;
@@ -87,8 +86,8 @@ function App() {
     }
   };
 
+  // Fetch company-wide Relieve (For Calendar)
   const fetchRelieve = async () => {
-    if (!user) return; // ADD THIS LINE!
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/relieve/company/${user.companyId}`, {
@@ -100,6 +99,21 @@ function App() {
       }
     } catch (error) {
       console.log("Could not fetch relieve requests");
+    }
+  };
+
+  const fetchJobs = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/jobs/company/${user.companyId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setJobs(data);
+      }
+    } catch (error) {
+      console.log("Could not fetch jobs");
     }
   };
 
@@ -137,7 +151,7 @@ function App() {
     }
   };
 
-    const fetchOperatorDocs = async (operatorId) => {
+  const fetchOperatorDocs = async (operatorId) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/documents/operator/${operatorId}`, {
@@ -147,14 +161,10 @@ function App() {
         const data = await response.json();
         setViewingDocs(data);
       } else {
-        const errorText = await response.text();
-        console.log("Could not fetch documents. Error:", errorText);
         setViewingDocs([]);
       }
     } catch (error) {
-      console.log("Could not fetch documents", error);
-      alert("Error fetching documents. Check console for details.");
-      setViewingDocs([]);
+      console.log("Could not fetch documents");
     }
   };
 
@@ -261,21 +271,13 @@ function App() {
     }
   };
 
-     const handleCreateOffDay = async () => {
-    if (!newOffDay.requestedDate) {
-      alert("Please select a date first!");
-      return;
-    }
-
+  const handleCreateOffDay = async () => {
     try {
       const token = localStorage.getItem('token');
-      // Format the date strictly to YYYY-MM-DD for the backend
-      const formattedDate = new Date(newOffDay.requestedDate).toISOString().split('T')[0];
-
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/offday/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ...newOffDay, requestedDate: formattedDate, operatorId: user.id, operatorName: user.name, companyId: user.companyId }),
+        body: JSON.stringify({ ...newOffDay, operatorId: user.id, operatorName: user.name, companyId: user.companyId }),
       });
       if (response.ok) {
         alert("Off day request submitted!");
@@ -283,13 +285,13 @@ function App() {
         setShowOffDayForm(false);
         fetchOffDays();
       } else {
-        const errorData = await response.json().catch(() => ({})); 
-        alert(`Failed to submit request. Error: ${errorData.message || 'Unknown error'}`);
+        alert("Failed to submit request.");
       }
     } catch (error) {
       alert("Error submitting request.");
     }
   };
+
   const handleCreateRelieve = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -329,7 +331,7 @@ function App() {
     }
   };
 
-    const handleProfileUpdate = async (e) => {
+  const handleProfileUpdate = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
@@ -341,10 +343,7 @@ function App() {
       const data = await response.json();
       if (response.ok) {
         alert("Profile updated successfully!");
-        // Update the local state with the new details immediately
-        const updatedUser = { ...user, homeAddress, phoneNumber, nric, jobPosition };
-        setUser(updatedUser);
-        localStorage.setItem('userData', JSON.stringify(updatedUser));
+        setUser(data);
       } else {
         alert("Failed to update profile.");
       }
@@ -546,12 +545,12 @@ function App() {
     return publicHolidays.find(h => h.date === dateStr);
   };
 
-    const getOffDayStatus = (day) => {
+  const getOffDayStatus = (day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const request = offDayRequests.find(r => r.requestedDate === dateStr);
     
     // If there is a request, we create a small object with the Name and Status
-    return request ? { ...request, dateStr: dateStr } : null;
+    return request ? { name: request.operatorName, status: request.status } : null;
   };
 
   const handleForgotPassword = async (e) => {
@@ -573,7 +572,8 @@ function App() {
     }
   };
 
-     // RESTORE SESSION ON REFRESH
+  // RESTORE SESSION ON REFRESH
+    // RESTORE SESSION ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem('userData');
     if (savedUser) {
@@ -590,26 +590,14 @@ function App() {
 
         const token = localStorage.getItem('token');
         if (token && parsedUser) {
-          // IMPORTANT: Set user first, wait, then fetch!
-          setTimeout(() => {
-            fetchOffDays();
-            fetchRelieve();
-          }, 100); 
+          fetchOffDays();
+          fetchRelieve();
         }
       } catch (e) {
         localStorage.removeItem('userData');
       }
     }
   }, []);
-
-  // Add this new useEffect to force a re-render when user or requests change
-  useEffect(() => {
-    if (user) {
-      // If the data is empty, fetch it
-      if (offDayRequests.length === 0) fetchOffDays();
-      if (relieveRequests.length === 0) fetchRelieve();
-    }
-  }, [user, offDayRequests.length, relieveRequests.length]); // Dependencies!
   if (user) {
     if (isAdminOrManager) {
       return (
@@ -669,47 +657,7 @@ function App() {
                               <button onClick={() => handleEditClick(op)} style={{ backgroundColor: '#3498db', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', marginLeft: '8px' }}>Edit</button>
                               <a href={`tel:${op.phoneNumber}`} style={{ marginLeft: '8px', backgroundColor: '#4CAF50', color: 'white', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '14px' }}>Call</a>
                               <button onClick={() => fetchOperatorDocs(op.id)} style={{ marginLeft: '8px', backgroundColor: '#f59e0b', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>View Files</button>
-                                            {/* View Files Modal for Admin/Manager */}
-                {viewingDocs && (
-                  <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex',
-                    justifyContent: 'center', alignItems: 'center', zIndex: 1000
-                  }}>
-                    <div style={{
-                      backgroundColor: 'white', padding: '25px', borderRadius: '10px',
-                      maxWidth: '500px', width: '90%', maxHeight: '80vh', overflowY: 'auto',
-                      boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
-                    }}>
-                      <h3 style={{ color: '#f59e0b', marginBottom: '15px' }}>📄 Operator Documents</h3>
-                      {viewingDocs.length > 0 ? (
-                        <ul style={{ listStyle: 'none', padding: 0 }}>
-                          {viewingDocs.map((doc) => (
-                            <li key={doc.id} style={{ padding: '10px 0', borderBottom: '1px solid #eee' }}>
-                              <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3498db', textDecoration: 'none', fontWeight: '500' }}>
-                                📎 {doc.fileName || "Untitled Document"}
-                              </a>
-                              <span style={{ marginLeft: '10px', fontSize: '12px', color: '#666' }}>({doc.fileType || "Unknown"})</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p style={{ color: '#666' }}>No documents found for this operator.</p>
-                      )}
-                      <button 
-                        onClick={() => setViewingDocs(null)} 
-                        style={{ 
-                          marginTop: '15px', backgroundColor: '#6c757d', color: 'white', 
-                          border: 'none', padding: '8px 20px', borderRadius: '5px', 
-                          cursor: 'pointer', fontSize: '14px'
-                        }}
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                )}
-</div>
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -763,18 +711,17 @@ function App() {
               </>
             )}
 
-                        {activePage === 'Requests' && (
+            {activePage === 'Requests' && (
               <>
                 <h1 className="dashboard-header">Off Day Requests</h1>
                 <div className="data-section">
                   {offDayRequests.length > 0 ? (
                     <ul className="data-list">
                       {offDayRequests.map((req) => (
-                                                <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                                                   <strong>{req.operatorName}</strong> - Date: <strong style={{ color: 'black' }}>{req.requestedDate ? req.requestedDate.split('T')[0] : (req.date ? req.date : "Date Not Found")}</strong> - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
-                          <br />Reason: {req.reason || "No reason provided."}
-                          {/* Debug line to see the exact backend data */}
-                          <div style={{ fontSize: '10px', color: '#999' }}>Debug: {JSON.stringify(req)}</div>                        {req.status === 'PENDING' && (
+                        <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                          <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
+                          <br />Reason: {req.reason}
+                          {req.status === 'PENDING' && (
                             <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>Cancel</button>
                           )}
                           {isManager && req.status === 'PENDING' && (
@@ -830,31 +777,13 @@ function App() {
                     {Array.from({ length: getFirstDayOfMonth(currentDate) }).map((_, i) => (
                       <div key={`empty-${i}`}></div>
                     ))}
-                                                         {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
-                    const day = i + 1;
-                    const holiday = isPublicHoliday(day);
-                    const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const offDayStatus = getOffDayStatus(day);
-                    return (
-                      <div 
-                        key={day} 
-                        onClick={() => {
-                          alert(`Clicked on ${formattedDate}`); // TEST ALERT
-                          if (!holiday && (!offDayStatus || offDayStatus.status === 'REJECTED')) {
-                            const reason = window.prompt(`Do you want to request ${formattedDate} off? Please enter a reason:`);
-                            if (reason) {
-                              setNewOffDay({ requestedDate: formattedDate, reason: reason });
-                              setTimeout(() => handleCreateOffDay(), 100);
-                            }
-                          } else if (offDayStatus && offDayStatus.status === 'PENDING') {
-                            alert("Off day request already pending.");
-                          } else if (offDayStatus && offDayStatus.status === 'APPROVED') {
-                            alert("Off day already approved.");
-                          } else if (holiday) {
-                            alert("Cannot request off day for a public holiday.");
-                          }
-                        }}
-                        style={{
+                    {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
+                      const day = i + 1;
+                      const holiday = isPublicHoliday(day);
+                      const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                      const offDayStatus = getOffDayStatus(day);
+                      return (
+                        <div key={day} style={{
                           padding: '10px',
                           textAlign: 'center',
                           border: '1px solid #eee',
@@ -862,15 +791,15 @@ function App() {
                           cursor: 'pointer',
                           backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
                         }}>
-                        <strong>{day}</strong>
-                        {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                        {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
-                        {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
-                          <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
-                        ))}
-                      </div>
-                    );
-                  })}
+                                                    <strong>{day}</strong>
+                          {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
+                          {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
+                            <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </>
@@ -1109,47 +1038,28 @@ function App() {
                   {Array.from({ length: getFirstDayOfMonth(currentDate) }).map((_, i) => (
                     <div key={`empty-${i}`}></div>
                   ))}
-                                        {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
-                      const day = i + 1;
-                      const holiday = isPublicHoliday(day);
-                      const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                      const offDayStatus = getOffDayStatus(day);
-                      return (
-                        <div 
-                          key={day} 
-                          onClick={() => {
-                            alert(`Clicked on ${formattedDate}`); // TEST ALERT
-                            if (!holiday && (!offDayStatus || offDayStatus.status === 'REJECTED')) {
-                              const reason = window.prompt(`Do you want to request ${formattedDate} off? Please enter a reason:`);
-                              if (reason) {
-                                setNewOffDay({ requestedDate: formattedDate, reason: reason });
-                                setTimeout(() => handleCreateOffDay(), 100);
-                              }
-                            } else if (offDayStatus && offDayStatus.status === 'PENDING') {
-                              alert("Off day request already pending.");
-                            } else if (offDayStatus && offDayStatus.status === 'APPROVED') {
-                              alert("Off day already approved.");
-                            } else if (holiday) {
-                              alert("Cannot request off day for a public holiday.");
-                            }
-                          }}
-                          style={{
-                            padding: '10px',
-                            textAlign: 'center',
-                            border: '1px solid #eee',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                            backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                          }}>
-                          <strong>{day}</strong>
+                  {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
+                    const day = i + 1;
+                    const holiday = isPublicHoliday(day);
+                    const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const offDayStatus = getOffDayStatus(day);
+                    return (
+                      <div key={day} style={{
+                        padding: '10px',
+                        textAlign: 'center',
+                        border: '1px solid #eee',
+                        borderRadius: '5px',
+                        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                      }}>
+                                                  <strong>{day}</strong>
                           {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
                           {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
                           {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
                             <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
                           ))}
-                        </div>
-                      );
-                    })}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </>

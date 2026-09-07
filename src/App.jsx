@@ -593,7 +593,7 @@ function App() {
         const page = localStorage.getItem('currentPage');
         setActivePage(page || 'Overview');
 
-        const token = localStorage.getItem('token');
+                const token = localStorage.getItem('token');
         if (token && parsedUser) {
           fetchOffDays();
           fetchRelieve();

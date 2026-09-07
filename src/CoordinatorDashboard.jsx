@@ -103,58 +103,46 @@ export default function CoordinatorDashboard() {
             </div>
             <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-sm"> <div className="overflow-x-auto"> <table className="w-full text-left text-xs sm:text-sm"> <thead className="bg-neutral-950 text-neutral-400 uppercase text-[11px] font-semibold border-b border-neutral-800"> <tr> <th className="px-4 py-3">ID</th> <th className="px-4 py-3">Operator Full Name</th> <th className="px-4 py-3">Mobile / PayNow Number</th> <th className="px-4 py-3">Current Assignment</th> <th className="px-4 py-3 text-right">Action</th> </tr> </thead> <tbody className="divide-y divide-neutral-800/80"> {operators .filter( (op) => op.name.toLowerCase().includes(searchQuery.toLowerCase()) || op.code.toLowerCase().includes(searchQuery.toLowerCase()) || op.hp.includes(searchQuery) ) .map((op) => ( <tr key={op.id} className="hover:bg-neutral-800/50 transition-colors"> <td className="px-4 py-3.5 font-mono font-bold text-amber-400">{op.code}</td> <td className="px-4 py-3.5 font-medium text-white">{op.name}</td> <td className="px-4 py-3.5 font-mono text-neutral-300"> <span className="flex items-center gap-1.5"> <Phone className="w-3.5 h-3.5 text-emerald-400" /> {op.hp} </span> </td> <td className="px-4 py-3.5 text-neutral-300">{op.project}</td> <td className="px-4 py-3.5 text-right"> <button onClick={() => { setSelectedOpId(op.id); setActiveTab('timesheet-pay'); showToast(`Loaded timesheet for ${op.name}`); }} className="text-amber-400 hover:text-amber-300 text-xs font-semibold inline-flex items-center gap-1 hover:underline cursor-pointer" > Generate PayClaim <ChevronRight className="w-3 h-3" /> </button> </td> </tr> ))} </tbody> </table> </div> </div> </div>
         )}
-        {activeTab === 'timesheet-pay' && (
-          <div className="space-y-6">
-            <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div> <h2 className="font-bold text-base sm:text-lg text-white flex items-center gap-2"> <FileText className="w-5 h-5 text-amber-500" /> Operator Timesheet & PayNow Claim Generator </h2> <p className="text-xs text-neutral-400"> Calculating for <span className="text-amber-400 font-bold">{currentOperator.name}</span> ({currentOperator.code}) at <span className="text-emerald-400 font-mono">S$ {currentOperator.rate}/hr</span> </p> </div>
-              <div className="flex items-center gap-2"> <select value={selectedOpId} onChange={(e) => setSelectedOpId(e.target.value)} className="bg-neutral-950 border border-neutral-700 text-xs font-bold text-amber-400 p-2 rounded-lg" > {operators.map((op) => ( <option key={op.id} value={op.id}> {op.code} - {op.name} </option> ))} </select>
-              <button onClick={() => { const text = `📄 *TIMESHEET CLAIM VOUCHER*\n🏢 THE ONLY1PROFILEMANAGEMENT (UEN: 53530731D)\n👷 Operator: ${currentOperator.name} (${currentOperator.code})\n📞 HP: ${currentOperator.hp}\n💰 Total Claim: S$ ${claimSummary.total.toFixed(2)}\nPayNow: ${currentOperator.hp}`; window.open(`https://wa.me/${currentOperator.hp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(text)}`, '_blank'); }} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 shadow cursor-pointer" > <Send className="w-3.5 h-3.5" /> <span>Send (WA)</span> </button>
-              <button onClick={() => window.print()} className="bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 shadow cursor-pointer" > <Printer className="w-3.5 h-3.5" /> <span>Print / PDF</span> </button> </div> </div>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-5 space-y-4">
-                <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-xl space-y-3">
-                  <h3 className="font-bold text-sm text-white flex items-center gap-2 border-b border-neutral-800 pb-2"> <DollarSign className="w-4 h-4 text-emerald-400" /> Automated Calculation Settings </h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div> <label className="block text-[11px] text-neutral-400 mb-1">Rate ($/hr)</label> <input type="number" disabled value={currentOperator.rate} className="w-full bg-neutral-950 border border-neutral-800 text-xs text-emerald-400 font-bold p-2 rounded font-mono" /> </div>
-                    <div> <label className="block text-[11px] text-neutral-400 mb-1">Hours / Day</label> <input type="number" value={timesheetForm.dailyHours} onChange={(e) => setTimesheetForm({ ...timesheetForm, dailyHours: e.target.value })} className="w-full bg-neutral-950 border border-neutral-700 text-xs text-white font-bold p-2 rounded font-mono" /> </div>
-                    <div> <label className="block text-[11px] text-neutral-400 mb-1">Total Days</label> <input type="number" min="1" value={timesheetForm.totalDays} onChange={(e) => setTimesheetForm({ ...timesheetForm, totalDays: e.target.value })} className="w-full bg-neutral-950 border border-neutral-700 text-xs text-white font-bold p-2 rounded font-mono" /> </div>
-                  </div>
-                  <div onClick={() => setTimesheetForm({ ...timesheetForm, includeLtw: !timesheetForm.includeLtw })} className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition-all ${ timesheetForm.includeLtw ? 'bg-emerald-950/40 border-emerald-600 text-emerald-300' : 'bg-neutral-950 border-neutral-800 text-neutral-400' }`} >
-                    <div className="flex items-center gap-2"> {timesheetForm.includeLtw ? <CheckSquare className="w-4 h-4 text-emerald-400" /> : <Square className="w-4 h-4 text-neutral-500" />} <span className="text-xs font-semibold">Included LTW (Lifting Team Work)</span> </div> <span className="text-[11px] font-mono font-bold">{timesheetForm.includeLtw ? '✅ TICKED' : 'NOT TICKED'}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="lg:col-span-7 bg-white text-neutral-900 p-6 sm:p-8 rounded-2xl shadow-2xl border border-neutral-300 print:m-0 print:p-2">
-                <div className="flex justify-between items-start border-b-2 border-neutral-950 pb-4 mb-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-neutral-950 text-amber-400 flex items-center justify-center font-black text-xl shadow"> {currentOperator.code} </div>
-                    <div> <h2 className="text-base sm:text-lg font-black tracking-tight uppercase text-neutral-950 leading-tight"> THE ONLY1PROFILEMANAGEMENT </h2> <div className="text-xs font-mono font-bold text-neutral-800 mt-0.5"> UEN: 53530731D (ACRA Registered Singapore) </div> </div>
-                  </div>
-                  <div className="text-right"> <div className="inline-block bg-neutral-950 text-amber-400 text-xs font-black px-2.5 py-1 rounded uppercase"> Payment Voucher & Timesheet </div> <div className="text-xs font-mono text-neutral-600 mt-1">Date: {timesheetForm.paymentDate}</div> </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 p-3.5 bg-neutral-100 rounded-xl mb-4 text-xs">
-                  <div> <span className="text-[10px] font-bold text-neutral-500 uppercase block">Operator:</span> <div className="font-black text-sm text-neutral-900">{currentOperator.name} ({currentOperator.code})</div> <div className="text-neutral-700">HP: {currentOperator.hp}</div> </div>
-                  <div> <span className="text-[10px] font-bold text-neutral-500 uppercase block">Payment Mode:</span> <div className="text-neutral-800 font-medium">Mode: <span className="font-bold">PayNow to Mobile Number</span></div> <div className="text-emerald-700 font-bold font-mono text-[11px]">PayNow: {currentOperator.hp}</div> </div>
-                </div>
-                <table className="w-full text-left text-xs mb-4 border-collapse">
-                  <thead> <tr className="border-b-2 border-neutral-900 text-neutral-800 uppercase font-bold text-[11px]"> <th className="py-2">Description</th> <th className="py-2 text-center">Hours</th> <th className="py-2 text-center">Days</th> <th className="py-2 text-right">Rate</th> <th className="py-2 text-right">Total (S$)</th> </tr> </thead>
-                  <tbody className="divide-y divide-neutral-200"> <tr> <td className="py-3 font-medium"> Crane Operator Deployment ({timesheetForm.shiftType}) <span className="block text-[10px] text-neutral-500">Project: {currentOperator.project} | LTW: {timesheetForm.includeLtw ? 'Included' : 'None'}</span> </td> <td className="py-3 text-center font-mono font-bold">{timesheetForm.dailyHours} hrs</td> <td className="py-3 text-center font-mono font-bold">{timesheetForm.totalDays} day(s)</td> <td className="py-3 text-right font-mono">S$ {currentOperator.rate}.00</td> <td className="py-3 text-right font-bold font-mono text-neutral-950">S$ {claimSummary.basePay.toFixed(2)}</td> </tr> </tbody>
-                </table>
-                <div className="flex justify-end mb-6"> <div className="w-64 bg-neutral-100 p-3 rounded-xl border border-neutral-300 space-y-1"> <div className="flex justify-between font-black text-sm text-neutral-950 pt-1"> <span>Total Transferred:</span> <span className="font-mono text-amber-700 text-base">S$ {claimSummary.total.toFixed(2)}</span> </div> <div className="text-[10px] text-emerald-700 font-bold text-right">✓ Transferred by PayNow</div> </div> </div>
-                <div className="grid grid-cols-2 gap-6 pt-4 border-t-2 border-neutral-950 text-xs text-neutral-600"> <div> <div className="h-10 border-b border-dashed border-neutral-400"></div> <div className="font-bold text-neutral-900 mt-1">Authorized Coordinator</div> <div className="text-[11px]">THE ONLY1PROFILEMANAGEMENT (UEN: 53530731D)</div> </div> <div> <div className="h-10 border-b border-dashed border-neutral-400"></div> <div className="font-bold text-neutral-900 mt-1">Operator Acknowledgement</div> <div className="text-[11px]">{currentOperator.name} ({currentOperator.code})</div> </div> </div>
-              </div>
-            </div>
-          </div>
-        )}
         {activeTab === 'partners' && (
           <div className="space-y-6">
             <div className="bg-neutral-900 border border-neutral-800 p-4 rounded-xl">
               <h2 className="font-bold text-base sm:text-lg text-white flex items-center gap-2"> <Building className="w-5 h-5 text-amber-500" /> Strategic Business Partners & Group Companies </h2>
               <p className="text-xs text-neutral-400"> Official corporate entities, foundation work suppliers, renovation builders, and crane supply partners. </p>
             </div>
-            <div className="grid grid-cols-1 md:
-
-                    )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-xl space-y-3">
+                <div className="flex items-center justify-between border-b border-neutral-800 pb-2.5"> <span className="bg-purple-500/10 text-purple-400 border border-purple-500/30 text-[10px] font-mono px-2.5 py-1 rounded font-bold"> UEN: 202531519C </span> <span className="text-xs text-neutral-400 font-mono">Family Business</span> </div>
+                <h3 className="font-black text-white text-base">Luxe Living & Builder Pte. Ltd.</h3>
+                <p className="text-xs text-neutral-300"> From painting contracts to renovation, building construction structures, and general building works. Ready for maincon subcontracting. </p>
+                <div className="space-y-1 text-xs text-neutral-400 pt-2 border-t border-neutral-800">
+                  <div>📍 Address: <span className="text-neutral-200">VERTEX 33 Ubi Avenue 3, #06-059, Singapore 408868</span></div>
+                  <div>👑 Company Director: <span className="text-white font-semibold">Norassyura</span></div>
+                  <div>👔 Managing Director: <span className="text-white font-semibold">Zulfiqar</span></div>
+                  <div>👷 Operation Manager Cum Safety Supervisor: <span className="text-amber-400 font-semibold">Farhan Aziz</span></div>
+                </div>
+              </div>
+              <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-xl space-y-3">
+                <div className="flex items-center justify-between border-b border-neutral-800 pb-2.5"> <span className="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-mono px-2.5 py-1 rounded font-bold"> UEN: 201201895M </span> <span className="text-xs text-emerald-400 font-mono">Live Company (14+ Years)</span> </div>
+                <h3 className="font-black text-white text-base">Jin Shun Foundation Pte. Ltd.</h3>
+                <p className="text-xs text-neutral-300"> Foundation works including micropiling, conventional piling, underpinning, and site supplier for crane operators. </p>
+                <div className="space-y-1 text-xs text-neutral-400 pt-2 border-t border-neutral-800">
+                  <div>📍 Address: <span className="text-neutral-200">105 Sims Avenue, #02-08, Chancerlodge Complex, Singapore 387429</span></div>
+                  <div>🤝 Hirer / Partner Rep: <span className="text-white font-semibold">Mr. Teoh Jin Chong</span></div>
+                  <div>⏰ Payout Terms: <span className="text-amber-400 font-semibold">5th & 20th Monthly Payout Cycles</span></div>
+                </div>
+              </div>
+              <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-xl space-y-3 md:col-span-2">
+                <div className="flex items-center justify-between border-b border-neutral-800 pb-2.5"> <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-mono px-2.5 py-1 rounded font-bold"> UEN: 201134134D </span> <span className="text-xs text-amber-400 font-mono">Primary Crane Source</span> </div>
+                <h3 className="font-black text-white text-base">South East Battery Service Pte. Ltd.</h3>
+                <p className="text-xs text-neutral-300"> Primary crane supplier providing heavy lifting machinery, crawler cranes, mobile cranes, and site job sources for THE ONLY1PROFILEMANAGEMENT operators. </p>
+                <div className="space-y-1 text-xs text-neutral-400 pt-2 border-t border-neutral-800">
+                  <div>SGPID: <span className="font-mono text-neutral-200">EACR0201134134D9</span></div>
+                  <div>Role: <span className="text-white font-semibold">Primary Crane Supplier & Project Source Provider</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {showReplacementModal && (

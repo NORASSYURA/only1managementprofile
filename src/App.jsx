@@ -572,7 +572,7 @@ function App() {
       setForgotMessage('Server is not running or CORS error!');
     }
   };
-       // RESTORE SESSION ON REFRESH
+        // RESTORE SESSION ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem('userData');
     if (savedUser) {
@@ -594,6 +594,18 @@ function App() {
         }
       } catch (e) {
         localStorage.removeItem('userData');
+      }
+    }
+  }, []);
+
+  // Force fetch when the user opens the Requests page
+  useEffect(() => {
+    if (user && activePage === 'Requests') {
+      fetchOffDays();
+    }
+  }, [user, activePage]);
+
+  if (user) {
       }
     }
   }, []);

@@ -777,45 +777,47 @@ function App() {
                     {Array.from({ length: getFirstDayOfMonth(currentDate) }).map((_, i) => (
                       <div key={`empty-${i}`}></div>
                     ))}
-                                        {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
-                      const day = i + 1;
-                      const holiday = isPublicHoliday(day);
-                      const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                      const offDayStatus = getOffDayStatus(day);
-                      return (
-                        <div 
-                          key={day}
-                          onClick={() => {
-                            if (!holiday && (!offDayStatus || offDayStatus.status === 'REJECTED')) {
-                              if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
-                                setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
-                                setTimeout(() => handleCreateOffDay(), 100);
-                              }
-                            } else if (offDayStatus && offDayStatus.status === 'PENDING') {
-                              alert("Off day request already pending.");
-                            } else if (offDayStatus && offDayStatus.status === 'APPROVED') {
-                              alert("Off day already approved.");
-                            } else if (holiday) {
-                              alert("Cannot request off day for a public holiday.");
+                                                         {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
+                    const day = i + 1;
+                    const holiday = isPublicHoliday(day);
+                    const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const offDayStatus = getOffDayStatus(day);
+                    return (
+                      <div 
+                        key={day} 
+                        onClick={() => {
+                          alert(`Clicked on ${formattedDate}`); // TEST ALERT
+                          if (!holiday && (!offDayStatus || offDayStatus.status === 'REJECTED')) {
+                            const reason = window.prompt(`Do you want to request ${formattedDate} off? Please enter a reason:`);
+                            if (reason) {
+                              setNewOffDay({ requestedDate: formattedDate, reason: reason });
+                              setTimeout(() => handleCreateOffDay(), 100);
                             }
-                          }} 
-                          style={{
-                            padding: '10px',
-                            textAlign: 'center',
-                            border: '1px solid #eee',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                            backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                          }}>
-                          <strong>{day}</strong>
-                          {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.operatorName} {offDayStatus.status}</div>}
-                          {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
-                            <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
-                          ))}
-                        </div>
-                      );
-                    })}
+                          } else if (offDayStatus && offDayStatus.status === 'PENDING') {
+                            alert("Off day request already pending.");
+                          } else if (offDayStatus && offDayStatus.status === 'APPROVED') {
+                            alert("Off day already approved.");
+                          } else if (holiday) {
+                            alert("Cannot request off day for a public holiday.");
+                          }
+                        }}
+                        style={{
+                          padding: '10px',
+                          textAlign: 'center',
+                          border: '1px solid #eee',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                        }}>
+                        <strong>{day}</strong>
+                        {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                        {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
+                        {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
+                          <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
+                        ))}
+                      </div>
+                    );
+                  })}
                   </div>
                 </div>
               </>
@@ -1054,45 +1056,47 @@ function App() {
                   {Array.from({ length: getFirstDayOfMonth(currentDate) }).map((_, i) => (
                     <div key={`empty-${i}`}></div>
                   ))}
-                                   {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
-                    const day = i + 1;
-                    const holiday = isPublicHoliday(day);
-                    const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const offDayStatus = getOffDayStatus(day);
-                    return (
-                      <div 
-                        key={day}
-                        onClick={() => {
-                          if (!holiday && (!offDayStatus || offDayStatus.status === 'REJECTED')) {
-                            if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
-                              setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
-                              setTimeout(() => handleCreateOffDay(), 100);
+                                        {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
+                      const day = i + 1;
+                      const holiday = isPublicHoliday(day);
+                      const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                      const offDayStatus = getOffDayStatus(day);
+                      return (
+                        <div 
+                          key={day} 
+                          onClick={() => {
+                            alert(`Clicked on ${formattedDate}`); // TEST ALERT
+                            if (!holiday && (!offDayStatus || offDayStatus.status === 'REJECTED')) {
+                              const reason = window.prompt(`Do you want to request ${formattedDate} off? Please enter a reason:`);
+                              if (reason) {
+                                setNewOffDay({ requestedDate: formattedDate, reason: reason });
+                                setTimeout(() => handleCreateOffDay(), 100);
+                              }
+                            } else if (offDayStatus && offDayStatus.status === 'PENDING') {
+                              alert("Off day request already pending.");
+                            } else if (offDayStatus && offDayStatus.status === 'APPROVED') {
+                              alert("Off day already approved.");
+                            } else if (holiday) {
+                              alert("Cannot request off day for a public holiday.");
                             }
-                          } else if (offDayStatus && offDayStatus.status === 'PENDING') {
-                            alert("Off day request already pending.");
-                          } else if (offDayStatus && offDayStatus.status === 'APPROVED') {
-                            alert("Off day already approved.");
-                          } else if (holiday) {
-                            alert("Cannot request off day for a public holiday.");
-                          }
-                        }} 
-                        style={{
-                          padding: '10px',
-                          textAlign: 'center',
-                          border: '1px solid #eee',
-                          borderRadius: '5px',
-                          cursor: 'pointer',
-                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                        }}>
-                        <strong>{day}</strong>
-                        {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                        {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.operatorName} {offDayStatus.status}</div>}
-                        {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
-                          <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
-                        ))}
-                      </div>
-                    );
-                  })}
+                          }}
+                          style={{
+                            padding: '10px',
+                            textAlign: 'center',
+                            border: '1px solid #eee',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                          }}>
+                          <strong>{day}</strong>
+                          {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
+                          {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
+                            <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
+                          ))}
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             </>

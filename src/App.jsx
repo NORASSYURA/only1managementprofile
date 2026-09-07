@@ -261,8 +261,7 @@ function App() {
     }
   };
 
-    const handleCreateOffDay = async () => {
-    // If newOffDay.requestedDate is empty, we stop the request to prevent empty dates
+     const handleCreateOffDay = async () => {
     if (!newOffDay.requestedDate) {
       alert("Please select a date first!");
       return;
@@ -270,10 +269,13 @@ function App() {
 
     try {
       const token = localStorage.getItem('token');
+      // Format the date strictly to YYYY-MM-DD for the backend
+      const formattedDate = new Date(newOffDay.requestedDate).toISOString().split('T')[0];
+
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/offday/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ...newOffDay, operatorId: user.id, operatorName: user.name, companyId: user.companyId }),
+        body: JSON.stringify({ ...newOffDay, requestedDate: formattedDate, operatorId: user.id, operatorName: user.name, companyId: user.companyId }),
       });
       if (response.ok) {
         alert("Off day request submitted!");
@@ -281,14 +283,13 @@ function App() {
         setShowOffDayForm(false);
         fetchOffDays();
       } else {
-        const errorData = await response.json(); // Get specific error from backend
+        const errorData = await response.json().catch(() => ({})); 
         alert(`Failed to submit request. Error: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       alert("Error submitting request.");
     }
   };
-
   const handleCreateRelieve = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -770,8 +771,10 @@ function App() {
                     <ul className="data-list">
                       {offDayRequests.map((req) => (
                                                 <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                          <strong>{req.operatorName}</strong> - Date: <strong style={{ color: 'black' }}>{req.requestedDate ? req.requestedDate.split('T')[0] : "Date Not Found"}</strong> - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
-                          <br />Reason: {req.reason || "No reason provided."}                          {req.status === 'PENDING' && (
+                                                   <strong>{req.operatorName}</strong> - Date: <strong style={{ color: 'black' }}>{req.requestedDate ? req.requestedDate.split('T')[0] : (req.date ? req.date : "Date Not Found")}</strong> - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
+                          <br />Reason: {req.reason || "No reason provided."}
+                          {/* Debug line to see the exact backend data */}
+                          <div style={{ fontSize: '10px', color: '#999' }}>Debug: {JSON.stringify(req)}</div>                        {req.status === 'PENDING' && (
                             <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>Cancel</button>
                           )}
                           {isManager && req.status === 'PENDING' && (

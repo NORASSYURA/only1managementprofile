@@ -69,7 +69,8 @@ function App() {
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
 
   // Fetch company-wide Off Days (For Calendar)
-  const fetchOffDays = async () => {
+    const fetchOffDays = async () => {
+    if (!user) return; // ADD THIS LINE!
     try {
       const token = localStorage.getItem('token');
       const url = `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`;
@@ -86,8 +87,8 @@ function App() {
     }
   };
 
-  // Fetch company-wide Relieve (For Calendar)
   const fetchRelieve = async () => {
+    if (!user) return; // ADD THIS LINE!
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/relieve/company/${user.companyId}`, {
@@ -99,21 +100,6 @@ function App() {
       }
     } catch (error) {
       console.log("Could not fetch relieve requests");
-    }
-  };
-
-  const fetchJobs = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/jobs/company/${user.companyId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setJobs(data);
-      }
-    } catch (error) {
-      console.log("Could not fetch jobs");
     }
   };
 
@@ -572,8 +558,7 @@ function App() {
     }
   };
 
-  // RESTORE SESSION ON REFRESH
-    // RESTORE SESSION ON REFRESH
+     // RESTORE SESSION ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem('userData');
     if (savedUser) {
@@ -590,14 +575,26 @@ function App() {
 
         const token = localStorage.getItem('token');
         if (token && parsedUser) {
-          fetchOffDays();
-          fetchRelieve();
+          // IMPORTANT: Set user first, wait, then fetch!
+          setTimeout(() => {
+            fetchOffDays();
+            fetchRelieve();
+          }, 100); 
         }
       } catch (e) {
         localStorage.removeItem('userData');
       }
     }
   }, []);
+
+  // Add this new useEffect to force a re-render when user or requests change
+  useEffect(() => {
+    if (user) {
+      // If the data is empty, fetch it
+      if (offDayRequests.length === 0) fetchOffDays();
+      if (relieveRequests.length === 0) fetchRelieve();
+    }
+  }, [user, offDayRequests.length, relieveRequests.length]); // Dependencies!
   if (user) {
     if (isAdminOrManager) {
       return (

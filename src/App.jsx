@@ -653,7 +653,89 @@ function App() {
                               <button onClick={() => handleEditClick(op)} style={{ backgroundColor: '#3498db', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', marginLeft: '8px' }}>Edit</button>
                               <a href={`tel:${op.phoneNumber}`} style={{ marginLeft: '8px', backgroundColor: '#4CAF50', color: 'white', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '14px' }}>Call</a>
                               <button onClick={() => fetchOperatorDocs(op.id)} style={{ marginLeft: '8px', backgroundColor: '#f59e0b', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>View Files</button>
-                            </div>
+{viewingDocs && (
+  <div className="data-section" style={{ marginTop: '20px', border: '1px solid #f59e0b', padding: '15px', borderRadius: '8px' }}>
+    <h3 style={{ color: '#f59e0b' }}>📄 Operator Documents</h3>
+    {viewingDocs.length > 0 ? (
+      <ul className="data-list">
+        {viewingDocs.map((doc) => (
+          <li key={doc.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
+            <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3498db', textDecoration: 'none' }}>
+              📎 {doc.fileName}
+            </a>
+            <span style={{ marginLeft: '10px', fontSize: '12px', color: '#666' }}>({doc.fileType})</span>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p style={{ color: '#666' }}>No documents found for this operator.</p>
+    )}
+    {/* View Documents Modal - Paste this right after the closing </ul> tag */}
+{viewingDocs && (
+  <div style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000
+  }}>
+    <div style={{
+      backgroundColor: 'white',
+      padding: '25px',
+      borderRadius: '10px',
+      maxWidth: '500px',
+      width: '90%',
+      maxHeight: '80vh',
+      overflowY: 'auto',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+    }}>
+      <h3 style={{ color: '#f59e0b', marginBottom: '15px' }}>📄 Operator Documents</h3>
+      {viewingDocs.length > 0 ? (
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {viewingDocs.map((doc) => (
+            <li key={doc.id} style={{ padding: '10px 0', borderBottom: '1px solid #eee' }}>
+              <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3498db', textDecoration: 'none', fontWeight: '500' }}>
+                📎 {doc.fileName}
+              </a>
+              <span style={{ marginLeft: '10px', fontSize: '12px', color: '#666' }}>({doc.fileType})</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p style={{ color: '#666' }}>No documents found for this operator.</p>
+      )}
+      <button 
+        onClick={() => setViewingDocs(null)} 
+        style={{ 
+          marginTop: '15px', 
+          backgroundColor: '#6c757d', 
+          color: 'white', 
+          border: 'none', 
+          padding: '8px 20px', 
+          borderRadius: '5px', 
+          cursor: 'pointer',
+          fontSize: '14px'
+        }}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+    <button 
+      onClick={() => setViewingDocs(null)} 
+      style={{ marginTop: '10px', backgroundColor: '#6c757d', color: 'white', border: 'none', padding: '6px 15px', borderRadius: '4px', cursor: 'pointer' }}
+    >
+      Close
+    </button>
+  </div>
+)}                            
+</div>
                           </li>
                         ))}
                       </ul>

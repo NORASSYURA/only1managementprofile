@@ -257,7 +257,13 @@ function App() {
     }
   };
 
-  const handleCreateOffDay = async () => {
+    const handleCreateOffDay = async () => {
+    // If newOffDay.requestedDate is empty, we stop the request to prevent empty dates
+    if (!newOffDay.requestedDate) {
+      alert("Please select a date first!");
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('https://operator-backend-1jjp.onrender.com/api/offday/request', {
@@ -271,7 +277,8 @@ function App() {
         setShowOffDayForm(false);
         fetchOffDays();
       } else {
-        alert("Failed to submit request.");
+        const errorData = await response.json(); // Get specific error from backend
+        alert(`Failed to submit request. Error: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       alert("Error submitting request.");
@@ -708,7 +715,7 @@ function App() {
               </>
             )}
 
-            {activePage === 'Requests' && (
+                        {activePage === 'Requests' && (
               <>
                 <h1 className="dashboard-header">Off Day Requests</h1>
                 <div className="data-section">
@@ -716,7 +723,7 @@ function App() {
                     <ul className="data-list">
                       {offDayRequests.map((req) => (
                         <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                          <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
+                          <strong>{req.operatorName}</strong> - Date: <strong style={{ color: 'black' }}>{req.requestedDate ? req.requestedDate : "Date Not Found"}</strong> - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
                           <br />Reason: {req.reason}
                           {req.status === 'PENDING' && (
                             <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>Cancel</button>

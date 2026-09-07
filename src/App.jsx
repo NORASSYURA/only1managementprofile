@@ -69,7 +69,8 @@ function App() {
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
 
   // Fetch company-wide Off Days (For Calendar)
-  const fetchOffDays = async () => {
+    const fetchOffDays = async () => {
+    if (!user) return;
     try {
       const token = localStorage.getItem('token');
       const url = `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`;
@@ -548,7 +549,9 @@ function App() {
   const getOffDayStatus = (day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const request = offDayRequests.find(r => r.requestedDate === dateStr);
-    return request ? request.status : null;
+    
+    // If there is a request, we create a small object with the Name and Status
+    return request ? { name: request.operatorName, status: request.status } : null;
   };
 
   const handleForgotPassword = async (e) => {
@@ -569,7 +572,6 @@ function App() {
       setForgotMessage('Server is not running or CORS error!');
     }
   };
-
   // RESTORE SESSION ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem('userData');
@@ -577,10 +579,14 @@ function App() {
       try {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
+        setHomeAddress(parsedUser.homeAddress || '');
+        setPhoneNumber(parsedUser.phoneNumber || '');
+        setNric(parsedUser.nric || '');
+        setJobPosition(parsedUser.jobPosition || '');
+        
         const page = localStorage.getItem('currentPage');
         setActivePage(page || 'Overview');
 
-        // Fetch data immediately after restoring user
         const token = localStorage.getItem('token');
         if (token && parsedUser) {
           fetchOffDays();
@@ -592,8 +598,14 @@ function App() {
     }
   }, []);
 
+  // Force fetch when the user opens the Requests page
+  useEffect(() => {
+    if (user && activePage === 'Requests') {
+      fetchOffDays();
+    }
+  }, [user, activePage]);
+
   if (user) {
-    if (isAdminOrManager) {
       return (
         <div className="dashboard">
           <div className="sidebar">
@@ -644,8 +656,7 @@ function App() {
                       <ul className="data-list">
                         {companyUsers.map((op) => (
                           <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>{op.name} ({op.email}) - NRIC: {op.nric} - Job: {op.jobPosition}</span>
-                            <div>
+<span>{op.name} ({op.email}) - Phone: {op.phoneNumber} - NRIC: {op.nric} - Job: {op.jobPosition} - Address: {op.homeAddress}</span>                            <div>
                               {isAdmin && (
                                 <button onClick={() => handleDelete(op.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', marginLeft: '8px' }}>Delete</button>
                               )}
@@ -714,8 +725,7 @@ function App() {
                     <ul className="data-list">
                       {offDayRequests.map((req) => (
                         <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                          <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
-                          <br />Reason: {req.reason}
+<strong>{req.operatorName}</strong> - Date: <strong>{req.requestedDate ? req.requestedDate.split('T')[0] : (req.date ? req.date : "Date Not Found")}</strong> - Status:                          <br />Reason: {req.reason}
                           {req.status === 'PENDING' && (
                             <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>Cancel</button>
                           )}
@@ -778,17 +788,33 @@ function App() {
                       const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                       const offDayStatus = getOffDayStatus(day);
                       return (
-                        <div key={day} style={{
-                          padding: '10px',
-                          textAlign: 'center',
-                          border: '1px solid #eee',
-                          borderRadius: '5px',
-                          cursor: 'pointer',
-                          backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-                        }}>
-                          <strong>{day}</strong>
+                       <div 
+  key={day} 
+  onClick={() => {
+    if (!holiday && (!offDayStatus || offDayStatus.status === 'REJECTED')) {
+      const reason = window.prompt(`Do you want to request ${formattedDate} off? Please enter a reason:`);
+      if (reason) {
+        setNewOffDay({ requestedDate: formattedDate, reason: reason });
+        setTimeout(() => handleCreateOffDay(), 100);
+      }
+    } else if (offDayStatus && offDayStatus.status === 'PENDING') {
+      alert("Off day request already pending.");
+    } else if (offDayStatus && offDayStatus.status === 'APPROVED') {
+      alert("Off day already approved.");
+    }
+  }}
+  style={{
+    padding: '10px',
+    textAlign: 'center',
+    border: '1px solid #eee',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+  }}
+>
+                                                    <strong>{day}</strong>
                           {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                          {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
+                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
                           {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
                             <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
                           ))}
@@ -1046,12 +1072,12 @@ function App() {
                         borderRadius: '5px',
                         backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
                       }}>
-                        <strong>{day}</strong>
-                        {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-                        {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
-                        {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
-                          <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
-                        ))}
+                                                  <strong>{day}</strong>
+                          {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
+                          {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
+                            <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
+                          ))}
                       </div>
                     );
                   })}

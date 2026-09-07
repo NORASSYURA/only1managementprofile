@@ -145,18 +145,28 @@ export default function CoordinatorDashboard() {
         )}
       </main>
 
-      {showReplacementModal && (
+           {showReplacementModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-neutral-900 border border-neutral-700 w-full max-w-lg rounded-xl overflow-hidden shadow-2xl">
             <div className="bg-red-600 px-5 py-3.5 flex items-center justify-between text-white">
               <h3 className="font-bold text-base">Broadcast Urgent Replacement Operator ⚠️</h3>
-              <button onClick={() => setShowReplacementModal(false)} className="cursor-pointer"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowReplacementModal(false)} className="cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
             </div>
             <div className="p-5 space-y-3.5 text-xs">
-              <p className="text-neutral-300"> This will broadcast an immediate replacement requirement to all registered operators in Singapore via WhatsApp. </p>
+              <p className="text-neutral-300">This will broadcast an immediate replacement requirement to all registered operators in Singapore via WhatsApp.</p>
               <div className="pt-2 flex justify-end gap-2">
-                <button onClick={() => setShowReplacementModal(false)} className="bg-neutral-800 text-neutral-300 px-4 py-2 rounded-lg cursor-pointer">Cancel</button>
-                <button onClick={() => { setShowReplacementModal(false); showToast('⚠️ Replacement broadcast sent!'); window.open(`https://wa.me/?text=${encodeURIComponent('🚨 *URGENT CRANE OP NEEDED*\nTHE ONLY1PROFILEMANAGEMENT (UEN: 53530731D)\nContact controller immediately!')}`, '_blank'); }} className="bg-red-600 text-white font-bold px-5 py-2 rounded-lg cursor-pointer" > Confirm & Send WhatsApp </button>
+                <button onClick={() => setShowReplacementModal(false)} className="bg-neutral-800 text-neutral-300 px-4 py-2 rounded-lg cursor-pointer">
+                  Cancel
+                </button>
+                <button onClick={() => {
+                  setShowReplacementModal(false);
+                  showToast('⚠️ Replacement broadcast sent!');
+                  window.open(`https://wa.me/?text=${encodeURIComponent('🚨 *URGENT CRANE OP NEEDED*\nTHE ONLY1PROFILEMANAGEMENT (UEN: 53530731D)\nContact controller immediately!')}`, '_blank');
+                }} className="bg-red-600 text-white font-bold px-5 py-2 rounded-lg cursor-pointer">
+                  Confirm & Send WhatsApp
+                </button>
               </div>
             </div>
           </div>
@@ -170,4 +180,4 @@ export default function CoordinatorDashboard() {
     </div>
   );
 }
-
+// END OF FILE - NO EXTRA CODE HERE

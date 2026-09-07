@@ -719,8 +719,7 @@ function App() {
                     <ul className="data-list">
                       {offDayRequests.map((req) => (
                         <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                          <strong>{req.operatorName}</strong> - Date: {req.requestedDate} - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
-                          <br />Reason: {req.reason}
+<strong>{req.operatorName}</strong> - Date: <strong>{req.requestedDate ? req.requestedDate.split('T')[0] : (req.date ? req.date : "Date Not Found")}</strong> - Status:                          <br />Reason: {req.reason}
                           {req.status === 'PENDING' && (
                             <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>Cancel</button>
                           )}

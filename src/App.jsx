@@ -137,7 +137,7 @@ function App() {
     }
   };
 
-  const fetchOperatorDocs = async (operatorId) => {
+    const fetchOperatorDocs = async (operatorId) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`https://operator-backend-1jjp.onrender.com/api/documents/operator/${operatorId}`, {
@@ -147,10 +147,14 @@ function App() {
         const data = await response.json();
         setViewingDocs(data);
       } else {
+        const errorText = await response.text();
+        console.log("Could not fetch documents. Error:", errorText);
         setViewingDocs([]);
       }
     } catch (error) {
-      console.log("Could not fetch documents");
+      console.log("Could not fetch documents", error);
+      alert("Error fetching documents. Check console for details.");
+      setViewingDocs([]);
     }
   };
 
@@ -324,7 +328,7 @@ function App() {
     }
   };
 
-  const handleProfileUpdate = async (e) => {
+    const handleProfileUpdate = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
@@ -336,7 +340,10 @@ function App() {
       const data = await response.json();
       if (response.ok) {
         alert("Profile updated successfully!");
-        setUser(data);
+        // Update the local state with the new details immediately
+        const updatedUser = { ...user, homeAddress, phoneNumber, nric, jobPosition };
+        setUser(updatedUser);
+        localStorage.setItem('userData', JSON.stringify(updatedUser));
       } else {
         alert("Failed to update profile.");
       }
@@ -661,7 +668,47 @@ function App() {
                               <button onClick={() => handleEditClick(op)} style={{ backgroundColor: '#3498db', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', marginLeft: '8px' }}>Edit</button>
                               <a href={`tel:${op.phoneNumber}`} style={{ marginLeft: '8px', backgroundColor: '#4CAF50', color: 'white', padding: '4px 10px', borderRadius: '4px', textDecoration: 'none', fontSize: '14px' }}>Call</a>
                               <button onClick={() => fetchOperatorDocs(op.id)} style={{ marginLeft: '8px', backgroundColor: '#f59e0b', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>View Files</button>
-                            </div>
+                                            {/* View Files Modal for Admin/Manager */}
+                {viewingDocs && (
+                  <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex',
+                    justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                  }}>
+                    <div style={{
+                      backgroundColor: 'white', padding: '25px', borderRadius: '10px',
+                      maxWidth: '500px', width: '90%', maxHeight: '80vh', overflowY: 'auto',
+                      boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+                    }}>
+                      <h3 style={{ color: '#f59e0b', marginBottom: '15px' }}>📄 Operator Documents</h3>
+                      {viewingDocs.length > 0 ? (
+                        <ul style={{ listStyle: 'none', padding: 0 }}>
+                          {viewingDocs.map((doc) => (
+                            <li key={doc.id} style={{ padding: '10px 0', borderBottom: '1px solid #eee' }}>
+                              <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3498db', textDecoration: 'none', fontWeight: '500' }}>
+                                📎 {doc.fileName || "Untitled Document"}
+                              </a>
+                              <span style={{ marginLeft: '10px', fontSize: '12px', color: '#666' }}>({doc.fileType || "Unknown"})</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p style={{ color: '#666' }}>No documents found for this operator.</p>
+                      )}
+                      <button 
+                        onClick={() => setViewingDocs(null)} 
+                        style={{ 
+                          marginTop: '15px', backgroundColor: '#6c757d', color: 'white', 
+                          border: 'none', padding: '8px 20px', borderRadius: '5px', 
+                          cursor: 'pointer', fontSize: '14px'
+                        }}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
+</div>
                           </li>
                         ))}
                       </ul>
@@ -722,10 +769,9 @@ function App() {
                   {offDayRequests.length > 0 ? (
                     <ul className="data-list">
                       {offDayRequests.map((req) => (
-                        <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                          <strong>{req.operatorName}</strong> - Date: <strong style={{ color: 'black' }}>{req.requestedDate ? req.requestedDate : "Date Not Found"}</strong> - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
-                          <br />Reason: {req.reason}
-                          {req.status === 'PENDING' && (
+                                                <li key={req.id} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                          <strong>{req.operatorName}</strong> - Date: <strong style={{ color: 'black' }}>{req.requestedDate ? req.requestedDate.split('T')[0] : "Date Not Found"}</strong> - Status: <strong style={{ color: req.status === 'PENDING' ? 'orange' : req.status === 'APPROVED' ? 'green' : 'red' }}>{req.status}</strong>
+                          <br />Reason: {req.reason || "No reason provided."}                          {req.status === 'PENDING' && (
                             <button onClick={() => handleCancelOffDay(req.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>Cancel</button>
                           )}
                           {isManager && req.status === 'PENDING' && (

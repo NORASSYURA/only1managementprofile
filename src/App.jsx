@@ -545,14 +545,14 @@ function App() {
     return publicHolidays.find(h => h.date === dateStr);
   };
 
-    const getOffDayStatus = (day) => {
+  const getOffDayStatus = (day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const request = offDayRequests.find(r => r.requestedDate === dateStr);
     
     // If there is a request, we create a small object with the Name and Status
     return request ? { name: request.operatorName, status: request.status } : null;
   };
-  
+
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     try {
@@ -573,16 +573,21 @@ function App() {
   };
 
   // RESTORE SESSION ON REFRESH
+    // RESTORE SESSION ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem('userData');
     if (savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
+        setHomeAddress(parsedUser.homeAddress || '');
+        setPhoneNumber(parsedUser.phoneNumber || '');
+        setNric(parsedUser.nric || '');
+        setJobPosition(parsedUser.jobPosition || '');
+        
         const page = localStorage.getItem('currentPage');
         setActivePage(page || 'Overview');
 
-        // Fetch data immediately after restoring user
         const token = localStorage.getItem('token');
         if (token && parsedUser) {
           fetchOffDays();
@@ -593,7 +598,6 @@ function App() {
       }
     }
   }, []);
-
   if (user) {
     if (isAdminOrManager) {
       return (
@@ -646,8 +650,7 @@ function App() {
                       <ul className="data-list">
                         {companyUsers.map((op) => (
                           <li key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>{op.name} ({op.email}) - NRIC: {op.nric} - Job: {op.jobPosition}</span>
-                            <div>
+<span>{op.name} ({op.email}) - Phone: {op.phoneNumber} - NRIC: {op.nric} - Job: {op.jobPosition} - Address: {op.homeAddress}</span>                            <div>
                               {isAdmin && (
                                 <button onClick={() => handleDelete(op.id)} style={{ backgroundColor: '#e53e3e', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', marginLeft: '8px' }}>Delete</button>
                               )}
@@ -1035,38 +1038,29 @@ function App() {
                   {Array.from({ length: getFirstDayOfMonth(currentDate) }).map((_, i) => (
                     <div key={`empty-${i}`}></div>
                   ))}
-                 {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
-  const day = i + 1;
-  const holiday = isPublicHoliday(day);
-  const offDayStatus = getOffDayStatus(day);
-  const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-  return (
-    <div key={day}
-      onClick={() => {
-        if (!holiday) {
-          if (window.confirm(`Do you want to request ${formattedDate} off?`)) {
-            setNewOffDay({ requestedDate: formattedDate, reason: 'Off Day Requested from Calendar' });
-            // We need to wait for the state to update before calling create. Use setTimeout or a new variable.
-            setTimeout(() => handleCreateOffDay(), 100);
-          }
-        }
-      }}
-      style={{
-        padding: '10px',
-        textAlign: 'center',
-        border: '1px solid #eee',
-        borderRadius: '5px',
-        cursor: holiday ? 'default' : 'pointer', // Clickable, except on public holidays
-        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
-      }}
-    >
-      <strong>{day}</strong>
-      {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
-      {offDayStatus && <div style={{ fontSize: '10px' }}>{offDayStatus}</div>}
-    </div>
-  );
-})}                </div>
+                  {Array.from({ length: getDaysInMonth(currentDate) }).map((_, i) => {
+                    const day = i + 1;
+                    const holiday = isPublicHoliday(day);
+                    const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const offDayStatus = getOffDayStatus(day);
+                    return (
+                      <div key={day} style={{
+                        padding: '10px',
+                        textAlign: 'center',
+                        border: '1px solid #eee',
+                        borderRadius: '5px',
+                        backgroundColor: holiday ? '#ffeb3b' : offDayStatus === 'APPROVED' ? '#c8e6c9' : offDayStatus === 'PENDING' ? '#ffe0b2' : offDayStatus === 'REJECTED' ? '#ffcdd2' : 'white'
+                      }}>
+                                                  <strong>{day}</strong>
+                          {holiday && <div style={{ fontSize: '10px', color: '#f57f17' }}>{holiday.name}</div>}
+                          {offDayStatus && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{offDayStatus.name} {offDayStatus.status}</div>}
+                          {relieveRequests.filter(r => r.date === formattedDate).map((relief) => (
+                            <div key={relief.id} style={{ fontSize: '10px', color: '#007bff' }}>Relief: {relief.relieverName}</div>
+                          ))}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </>
           )}

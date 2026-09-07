@@ -595,25 +595,25 @@ function App() {
 
                 const token = localStorage.getItem('token');
         if (token && parsedUser) {
-          fetchOffDays();
-          fetchRelieve();
-        }
-      } catch (e) {
-        localStorage.removeItem('userData');
-      }
-    }
-  }, []);
+  fetchOffDays();
+  fetchRelieve();
+}
+} catch (e) {
+  localStorage.removeItem('userData');
+}
+}
+}, []);
 
-  // Force fetch when the user opens the Requests page
-  useEffect(() => {
-    if (user && activePage === 'Requests') {
-      fetchOffDays();
-    }
-  }, [user, activePage]);
+// Force fetch when the user opens the Requests page
+useEffect(() => {
+  if (user && activePage === 'Requests') {
+    fetchOffDays();
+  }
+}, [user, activePage]);
 
-  // RENDER ADMIN / MANAGER DASHBOARD
-  if (user && isAdminOrManager) {
-    return (
+// RENDER ADMIN / MANAGER DASHBOARD
+if (user && isAdminOrManager) {
+  return (
       <div className="dashboard">
         <div className="sidebar">
           <img src={LOGO_URL} alt="Company Logo" style={{ maxWidth: '80px', margin: '0 auto 15px', display: 'block', borderRadius: '8px' }} />

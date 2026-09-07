@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import CoordinatorDashboard from './CoordinatorDashboard'; // <--- ADDED THIS IMPORT
 
 function App() {
   const [email, setEmail] = useState('');

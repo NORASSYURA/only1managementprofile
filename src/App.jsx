@@ -69,7 +69,8 @@ function App() {
   const LOGO_URL = 'https://res.cloudinary.com/uywj26ei/image/upload/v1788451739/The_Only1_Profile_Management_Logo_A4.png';
 
   // Fetch company-wide Off Days (For Calendar)
-  const fetchOffDays = async () => {
+    const fetchOffDays = async () => {
+    if (!user) return;
     try {
       const token = localStorage.getItem('token');
       const url = `https://operator-backend-1jjp.onrender.com/api/offday/company/${user.companyId}`;
@@ -571,7 +572,7 @@ function App() {
       setForgotMessage('Server is not running or CORS error!');
     }
   };
-     // RESTORE SESSION ON REFRESH
+      // RESTORE SESSION ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem('userData');
     if (savedUser) {
